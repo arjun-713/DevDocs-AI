@@ -50,7 +50,7 @@ In-memory vector store that requires zero infrastructure. Runs inside your FastA
 ### Google Gemini API
 > **Why Gemini?** You already have the API key from CryptoGuard. Zero new account setup.
 
-- `gemini-1.5-flash` — fast chat model, 1M token context window, great for large doc sets
+- `gemini-2.5-flash` — fast chat model, 1M token context window, great for large doc sets
 - `text-embedding-004` — free tier, 768-dim vectors, works natively with ChromaDB
 - You already used the streaming API in CryptoGuard so the pattern is familiar
 

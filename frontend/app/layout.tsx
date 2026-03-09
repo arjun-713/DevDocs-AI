@@ -1,0 +1,17 @@
+import "./globals.css"
+import { ReactNode } from "react"
+
+export const metadata = {
+  title: "DevDocs AI | Talk to any codebase",
+  description: "Chat with any GitHub repo. Instantly.",
+}
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+      </body>
+    </html>
+  )
+}
