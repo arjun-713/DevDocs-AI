@@ -152,53 +152,30 @@ export default function ChatPage() {
                 throw new Error(errData.detail || "Error generating response");
             }
 
-            // Only add the AI bubble once we're ready to stream content into it
-            setMessages((prev) => [...prev, { role: "ai", content: "", sources: [] }]);
+            // Read the full response text (Next.js proxy buffers it anyway)
+            const fullText = await res.text();
 
-            const reader = res.body?.getReader();
-            const decoder = new TextDecoder();
-            let done = false;
-            let firstChunk = true;
+            let answerText = fullText;
+            let parsedSources: { source: string; url: string }[] = [];
 
-            while (reader && !done) {
-                const { value, done: doneReading } = await reader.read();
-                done = doneReading;
-                const chunkValue = decoder.decode(value);
-
-                if (firstChunk && chunkValue.startsWith("METADATA:")) {
-                    const parts = chunkValue.split("\n\n");
-                    const metaString = parts[0].substring("METADATA:".length);
+            // Extract METADATA header if present
+            if (fullText.startsWith("METADATA:")) {
+                const splitIndex = fullText.indexOf("\n\n");
+                if (splitIndex !== -1) {
+                    const metaString = fullText.substring("METADATA:".length, splitIndex);
                     try {
-                        const sources = JSON.parse(metaString);
-                        setMessages((prev) => {
-                            const newMsgs = [...prev];
-                            newMsgs[newMsgs.length - 1].sources = sources;
-                            return newMsgs;
-                        });
+                        parsedSources = JSON.parse(metaString);
                     } catch (e) {
                         console.error("Failed to parse metadata", e);
                     }
-                    firstChunk = false;
-
-                    if (parts.length > 1) {
-                        const textChunk = parts.slice(1).join("\n\n");
-                        if (textChunk) {
-                            setMessages((prev) => {
-                                const newMsgs = [...prev];
-                                newMsgs[newMsgs.length - 1].content += textChunk;
-                                return newMsgs;
-                            });
-                        }
-                    }
+                    answerText = fullText.substring(splitIndex + 2);
                 } else {
-                    firstChunk = false;
-                    setMessages((prev) => {
-                        const newMsgs = [...prev];
-                        newMsgs[newMsgs.length - 1].content += chunkValue;
-                        return newMsgs;
-                    });
+                    // No double newline found — entire response is metadata (unlikely)
+                    answerText = "";
                 }
             }
+
+            setMessages((prev) => [...prev, { role: "ai", content: answerText.trim(), sources: parsedSources }]);
         } catch (error: any) {
             setMessages((prev) => [...prev, { role: "ai", content: `Error: ${error.message}` }]);
         } finally {
@@ -206,8 +183,8 @@ export default function ChatPage() {
         }
     };
 
-    // Determine if the last message is the currently-streaming AI message with no content yet
-    const showTypingIndicator = isStreaming && (messages.length === 0 || messages[messages.length - 1].content === "");
+    // Show typing dots while waiting for the full response
+    const showTypingIndicator = isStreaming;
 
     return (
         <div className="flex h-screen bg-[#f5f5f7] font-dm w-full overflow-hidden">
@@ -310,61 +287,55 @@ export default function ChatPage() {
                         )}
 
                         {/* ── Chat Messages ── */}
-                        {status === "ready" && messages.map((msg, idx) => {
-                            // Don't render the empty streaming placeholder as a visible bubble
-                            const isEmptyStreamingBubble = isStreaming && idx === messages.length - 1 && msg.role === "ai" && msg.content === "";
-                            if (isEmptyStreamingBubble) return null;
+                        {status === "ready" && messages.map((msg, idx) => (
+                            <div
+                                key={idx}
+                                className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                            >
+                                {/* AI Avatar */}
+                                {msg.role === "ai" && (
+                                    <div className="hidden sm:flex w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm items-center justify-center mr-3 shrink-0 mt-1">
+                                        <div className="flex flex-wrap w-[14px] gap-[2px]">
+                                            <div className="w-[6px] h-[6px] rounded-full bg-blue-600"></div>
+                                            <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                            <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                            <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                        </div>
+                                    </div>
+                                )}
 
-                            return (
-                                <div
-                                    key={idx}
-                                    className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                                >
-                                    {/* AI Avatar */}
-                                    {msg.role === "ai" && (
-                                        <div className="hidden sm:flex w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm items-center justify-center mr-3 shrink-0 mt-1">
-                                            <div className="flex flex-wrap w-[14px] gap-[2px]">
-                                                <div className="w-[6px] h-[6px] rounded-full bg-blue-600"></div>
-                                                <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
-                                                <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
-                                                <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
-                                            </div>
+                                <div className={`flex flex-col gap-2 min-w-0 ${msg.role === "user" ? "items-end max-w-[85%]" : "max-w-[90%] md:max-w-[85%]"}`}>
+                                    <div
+                                        className={`px-5 py-4 rounded-[1.5rem] text-[15px] leading-relaxed break-words ${msg.role === "user"
+                                            ? "bg-blue-600 text-white rounded-br-md shadow-md shadow-blue-600/20"
+                                            : "bg-white border border-gray-200/80 text-gray-800 rounded-bl-md shadow-sm"
+                                            }`}
+                                    >
+                                        <div className="whitespace-pre-wrap font-medium">
+                                            <RenderMarkdown text={msg.content} />
+                                        </div>
+                                    </div>
+
+                                    {/* Source Citations */}
+                                    {msg.sources && msg.sources.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-1 ml-1">
+                                            {msg.sources.map((src, i) => (
+                                                <a
+                                                    key={i}
+                                                    href={src.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="group flex items-center gap-1.5 bg-white border border-gray-200 px-3 py-1.5 rounded-full hover:border-blue-300 hover:shadow-sm transition-all text-[11px] font-medium text-gray-500 hover:text-blue-600 max-w-full overflow-hidden"
+                                                >
+                                                    <Page className="w-3 h-3 shrink-0 text-blue-500" strokeWidth={2.5} />
+                                                    <span className="truncate">{src.source.split("/").pop()}</span>
+                                                </a>
+                                            ))}
                                         </div>
                                     )}
-
-                                    <div className={`flex flex-col gap-2 min-w-0 ${msg.role === "user" ? "items-end max-w-[85%]" : "max-w-[90%] md:max-w-[85%]"}`}>
-                                        <div
-                                            className={`px-5 py-4 rounded-[1.5rem] text-[15px] leading-relaxed break-words ${msg.role === "user"
-                                                ? "bg-blue-600 text-white rounded-br-md shadow-md shadow-blue-600/20"
-                                                : "bg-white border border-gray-200/80 text-gray-800 rounded-bl-md shadow-sm"
-                                                }`}
-                                        >
-                                            <div className="whitespace-pre-wrap font-medium">
-                                                <RenderMarkdown text={msg.content} />
-                                            </div>
-                                        </div>
-
-                                        {/* Source Citations */}
-                                        {msg.sources && msg.sources.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 mt-1 ml-1">
-                                                {msg.sources.map((src, i) => (
-                                                    <a
-                                                        key={i}
-                                                        href={src.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="group flex items-center gap-1.5 bg-white border border-gray-200 px-3 py-1.5 rounded-full hover:border-blue-300 hover:shadow-sm transition-all text-[11px] font-medium text-gray-500 hover:text-blue-600 max-w-full overflow-hidden"
-                                                    >
-                                                        <Page className="w-3 h-3 shrink-0 text-blue-500" strokeWidth={2.5} />
-                                                        <span className="truncate">{src.source.split("/").pop()}</span>
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ))}
 
                         {/* ── Typing / Streaming Indicator ── */}
                         {showTypingIndicator && status === "ready" && (
