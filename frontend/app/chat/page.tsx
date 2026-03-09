@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Sparks, ArrowRight, Page, WarningTriangle, Database, Server } from "iconoir-react";
+import { ArrowRight, Page, WarningTriangle, Database, Server } from "iconoir-react";
 
 /* ── Simple inline markdown renderer (bold, code, italic) ── */
 function RenderMarkdown({ text }: { text: string }) {
@@ -322,16 +322,21 @@ export default function ChatPage() {
                                 >
                                     {/* AI Avatar */}
                                     {msg.role === "ai" && (
-                                        <div className="hidden sm:flex w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border border-blue-400 items-center justify-center mr-3 shrink-0 mt-1 shadow-sm">
-                                            <Sparks className="w-4 h-4 text-white" />
+                                        <div className="hidden sm:flex w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm items-center justify-center mr-3 shrink-0 mt-1">
+                                            <div className="flex flex-wrap w-[14px] gap-[2px]">
+                                                <div className="w-[6px] h-[6px] rounded-full bg-blue-600"></div>
+                                                <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                                <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                                <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                            </div>
                                         </div>
                                     )}
 
                                     <div className={`flex flex-col gap-2 min-w-0 ${msg.role === "user" ? "items-end max-w-[85%]" : "max-w-[90%] md:max-w-[85%]"}`}>
                                         <div
                                             className={`px-5 py-4 rounded-[1.5rem] text-[15px] leading-relaxed break-words ${msg.role === "user"
-                                                    ? "bg-blue-600 text-white rounded-br-md shadow-md shadow-blue-600/20"
-                                                    : "bg-white border border-gray-200/80 text-gray-800 rounded-bl-md shadow-sm"
+                                                ? "bg-blue-600 text-white rounded-br-md shadow-md shadow-blue-600/20"
+                                                : "bg-white border border-gray-200/80 text-gray-800 rounded-bl-md shadow-sm"
                                                 }`}
                                         >
                                             <div className="whitespace-pre-wrap font-medium">
@@ -364,8 +369,13 @@ export default function ChatPage() {
                         {/* ── Typing / Streaming Indicator ── */}
                         {showTypingIndicator && status === "ready" && (
                             <div className="flex w-full justify-start">
-                                <div className="hidden sm:flex w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border border-blue-400 items-center justify-center mr-3 shrink-0 mt-1 shadow-sm">
-                                    <Sparks className="w-4 h-4 text-white" />
+                                <div className="hidden sm:flex w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm items-center justify-center mr-3 shrink-0 mt-1">
+                                    <div className="flex flex-wrap w-[14px] gap-[2px]">
+                                        <div className="w-[6px] h-[6px] rounded-full bg-blue-600"></div>
+                                        <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                        <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                        <div className="w-[6px] h-[6px] rounded-full bg-gray-800"></div>
+                                    </div>
                                 </div>
                                 <div className="bg-white border border-gray-200/80 rounded-[1.5rem] rounded-bl-md shadow-sm px-6 py-4 flex items-center gap-2">
                                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
