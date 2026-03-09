@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = FastAPI(
     title="DevDocs AI API",
@@ -15,6 +19,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from app.api.v1.endpoints.ingest import router as ingest_router
+from app.api.v1.endpoints.chat import router as chat_router
+
+app.include_router(ingest_router, prefix="/api/v1", tags=["ingestion"])
+app.include_router(chat_router, prefix="/api/v1", tags=["chat"])
 
 @app.get("/")
 async def root():
