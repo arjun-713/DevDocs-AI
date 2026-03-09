@@ -1,10 +1,12 @@
-from typing import Optional
+from typing import Optional, Dict
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
+import logging
+import os
+
 from app.services.rag.ingestion.crawler import GitHubCrawler
 from app.services.rag.processor import RAGProcessor
 from app.db.chroma import get_chroma_client, get_repo_collection_name
-import os
 
 router = APIRouter()
 
@@ -21,8 +23,7 @@ class IngestResponse(BaseModel):
     collection_name: Optional[str] = None
     message: str
 
-from typing import Dict
-import logging
+
 
 async def perform_ingestion(repo_url: str, branch: str, collection_name: str, api_key: str):
     """

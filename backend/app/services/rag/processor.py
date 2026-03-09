@@ -3,7 +3,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from .ingestion.models import RepoDoc
-import os
+
 
 class RAGProcessor:
     def __init__(self, api_key: str):
@@ -45,21 +45,28 @@ class RAGProcessor:
     async def index_documents(self, chroma_client, collection_name: str, documents: List[Document]):
         """
         Embeds and stores documents in ChromaDB.
+        Processes in batches of 100 to avoid API limits.
         """
         collection = chroma_client.get_or_create_collection(name=collection_name)
         
-        # Batch process for embeddings (LangChain handles this internally)
-        texts = [doc.page_content for doc in documents]
-        metadatas = [doc.metadata for doc in documents]
-        ids = [f"{doc.metadata['source']}_{i}" for i, doc in enumerate(documents)]
+        batch_size = 100
+        total_indexed = 0
         
-        # Since we are using LangChain embeddings but the raw ChromaDB client:
-        embeddings = self.embeddings.embed_documents(texts)
+        for start in range(0, len(documents), batch_size):
+            batch = documents[start:start + batch_size]
+            
+            texts = [doc.page_content for doc in batch]
+            metadatas = [doc.metadata for doc in batch]
+            ids = [f"{doc.metadata['source']}_chunk_{start + i}" for i, doc in enumerate(batch)]
+            
+            embeddings = self.embeddings.embed_documents(texts)
+            
+            collection.add(
+                embeddings=embeddings,
+                documents=texts,
+                metadatas=metadatas,
+                ids=ids
+            )
+            total_indexed += len(ids)
         
-        collection.add(
-            embeddings=embeddings,
-            documents=texts,
-            metadatas=metadatas,
-            ids=ids
-        )
-        return len(ids)
+        return total_indexed

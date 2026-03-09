@@ -34,12 +34,16 @@ async def chat_with_repo(request: ChatRequest):
         # 1. Retrieve relevant chunks
         retriever = RAGRetriever(api_key=api_key)
         context_docs = retriever.get_relevant_documents(collection_name, request.query)
-        
-        if not context_docs:
-            return StreamingResponse(
-                iter(["I couldn't find any relevant documentation for this repository. Please make sure it has been ingested."]),
-                media_type="text/plain"
+    except Exception as retrieval_error:
+        error_msg = str(retrieval_error)
+        if "does not exist" in error_msg or "not found" in error_msg.lower():
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Repository has not been ingested yet. Please call POST /api/v1/ingest first with repo_url: {request.repo_url}"
             )
+        raise HTTPException(status_code=500, detail=error_msg)
+
+    try:
 
         # 2. Setup LLM and metadata
         llm_service = LLMService(api_key=api_key)
