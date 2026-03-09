@@ -20,15 +20,19 @@ class GitHubCrawler:
         response.raise_for_status()
         return response.json().get("tree", [])
 
-    async def fetch_file_content(self, owner: str, repo: str, path: str, branch: str = "main") -> str:
+    async def fetch_file_content(self, owner: str, repo: str, path: str, branch: str, semaphore: asyncio.Semaphore) -> str:
         """
-        Fetches the raw content of a file from raw.githubusercontent.com.
+        Fetches raw content with semaphore control to prevent rate limiting.
         """
-        url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}"
-        response = await self.client.get(url)
-        if response.status_code == 200:
-            return response.text
-        return ""
+        async with semaphore:
+            url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}"
+            try:
+                response = await self.client.get(url)
+                if response.status_code == 200:
+                    return response.text
+            except Exception:
+                pass # Silently skip failed individual files
+            return ""
 
     async def crawl(self, repo_url: str, branch: str = "main") -> CrawlerResult:
         """
@@ -47,9 +51,10 @@ class GitHubCrawler:
             for item in tree if item["type"] == "blob" and is_doc_file(item["path"])
         ]
 
-        # Fetch contents in parallel
+        # Fetch contents in parallel with controlled concurrency
+        semaphore = asyncio.Semaphore(10) # 10 parallel requests at a time
         tasks = [
-            self.fetch_file_content(owner, repo, doc.path, branch)
+            self.fetch_file_content(owner, repo, doc.path, branch, semaphore)
             for doc in doc_files
         ]
         contents = await asyncio.gather(*tasks)
@@ -57,10 +62,13 @@ class GitHubCrawler:
         for doc, content in zip(doc_files, contents):
             doc.content = content
 
+        # Filter out files that were found but appeared empty or failed to download
+        valid_docs = [d for d in doc_files if d.content and len(d.content) > 10]
+
         return CrawlerResult(
             repo_url=repo_url,
-            files_found=len(doc_files),
-            files=doc_files
+            files_found=len(valid_docs),
+            files=valid_docs
         )
 
     async def __aenter__(self):
