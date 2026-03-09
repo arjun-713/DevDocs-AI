@@ -16,6 +16,7 @@ ingestion_status: Dict[str, dict] = {}
 class IngestRequest(BaseModel):
     repo_url: str
     branch: Optional[str] = "main"
+    force: Optional[bool] = False
 
 class IngestResponse(BaseModel):
     status: str
@@ -72,19 +73,27 @@ async def ingest_repository(request: IngestRequest, background_tasks: Background
 
     collection_name = get_repo_collection_name(request.repo_url)
     
-    # Check if already indexed
+    # If force re-ingest, delete the old collection first
     client = get_chroma_client()
-    try:
-        existing_collection = client.get_collection(name=collection_name)
-        if existing_collection.count() > 0:
-            return IngestResponse(
-                status="completed",
-                repo_url=request.repo_url,
-                collection_name=collection_name,
-                message="Repository is already indexed and ready for chat."
-            )
-    except Exception:
-        pass # Collection doesn't exist, proceed
+    if request.force:
+        try:
+            client.delete_collection(name=collection_name)
+            logging.info(f"Force re-ingest: deleted old collection {collection_name}")
+        except Exception:
+            pass  # Collection didn't exist
+    else:
+        # Check if already indexed
+        try:
+            existing_collection = client.get_collection(name=collection_name)
+            if existing_collection.count() > 0:
+                return IngestResponse(
+                    status="completed",
+                    repo_url=request.repo_url,
+                    collection_name=collection_name,
+                    message="Repository is already indexed and ready for chat."
+                )
+        except Exception:
+            pass # Collection doesn't exist, proceed
 
     # Check if already in progress
     if collection_name in ingestion_status and ingestion_status[collection_name]["status"] == "processing":

@@ -99,7 +99,7 @@ export default function GitHubReposSection() {
         }
       `}} />
 
-            <div className="max-w-[1400px] mx-auto flex flex-col items-center">
+            <div className="max-w-[1800px] mx-auto flex flex-col items-center">
 
                 {/* Header */}
                 <div

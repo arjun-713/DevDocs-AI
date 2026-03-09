@@ -23,7 +23,7 @@ export default function FeaturesSection() {
 
     return (
         <section ref={sectionRef} className="w-full bg-[#f5f5f7] py-24 md:py-32 relative font-dm">
-            <div className="max-w-6xl mx-auto px-6 flex flex-col items-center">
+            <div className="max-w-[1800px] mx-auto px-6 md:px-12 flex flex-col items-center">
 
                 {/* Header */}
                 <div
@@ -40,11 +40,11 @@ export default function FeaturesSection() {
                 </div>
 
                 {/* Bento Grid layout matching the prompt constraints */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-5xl mb-12">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 w-full max-w-[1400px] mb-12">
 
                     {/* Card 1: Top Left (Conversational Search) */}
                     <div
-                        className="md:col-span-3 bg-white rounded-3xl p-8 flex flex-col min-h-[420px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                        className="lg:col-span-3 bg-white rounded-3xl p-8 flex flex-col min-h-[420px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(20px)", transitionDelay: "100ms" }}
                     >
                         <div className="flex-1 bg-gray-50 rounded-2xl mb-8 overflow-hidden relative border border-gray-100 flex items-center justify-center p-6 shadow-inner">
@@ -74,7 +74,7 @@ export default function FeaturesSection() {
 
                     {/* Card 2: Top Right (Automated Ingestion) */}
                     <div
-                        className="md:col-span-2 bg-white rounded-3xl p-8 flex flex-col min-h-[420px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                        className="lg:col-span-2 bg-white rounded-3xl p-8 flex flex-col min-h-[420px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(20px)", transitionDelay: "200ms" }}
                     >
                         <div className="flex-1 bg-gray-50 rounded-2xl mb-8 overflow-hidden relative border border-gray-100 flex flex-col pt-6 pb-4 px-6 justify-center gap-3 shadow-inner">
@@ -109,7 +109,7 @@ export default function FeaturesSection() {
 
                     {/* Card 3: Bottom Left (Local Knowledge Storage/Workflow Automation) */}
                     <div
-                        className="md:col-span-3 bg-white rounded-3xl p-8 flex flex-col md:flex-row gap-8 min-h-[220px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                        className="lg:col-span-3 bg-white rounded-3xl p-8 flex flex-col md:flex-row gap-8 min-h-[220px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(20px)", transitionDelay: "300ms" }}
                     >
                         <div className="flex-1 bg-gray-50 rounded-2xl h-[160px] md:h-auto overflow-hidden relative border border-gray-100 p-6 flex flex-col gap-5 justify-center shadow-inner">
@@ -154,7 +154,7 @@ export default function FeaturesSection() {
 
                     {/* Card 4: Bottom Right (Customizable Workspaces - Dashed border) */}
                     <div
-                        className="md:col-span-2 bg-transparent rounded-3xl p-8 flex flex-col min-h-[220px] border-[2px] border-dashed border-gray-300/80 hover:bg-white/50 hover:shadow-sm hover:-translate-y-1 transition-all duration-300"
+                        className="lg:col-span-2 bg-transparent rounded-3xl p-8 flex flex-col min-h-[220px] border-[2px] border-dashed border-gray-300/80 hover:bg-white/50 hover:shadow-sm hover:-translate-y-1 transition-all duration-300"
                         style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(20px)", transitionDelay: "400ms" }}
                     >
                         <div className="flex-1 rounded-2xl mb-6 flex flex-col p-2">

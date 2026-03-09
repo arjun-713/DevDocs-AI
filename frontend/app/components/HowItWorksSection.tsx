@@ -23,7 +23,7 @@ export default function HowItWorksSection() {
 
     return (
         <section ref={sectionRef} className="w-full bg-white py-24 md:py-32 relative overflow-hidden font-dm">
-            <div className="max-w-6xl mx-auto px-6 flex flex-col items-center">
+            <div className="max-w-[1800px] mx-auto px-6 md:px-12 flex flex-col items-center">
 
                 {/* Header */}
                 <div
@@ -39,7 +39,7 @@ export default function HowItWorksSection() {
                 </div>
 
                 {/* 3 Steps */}
-                <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12 text-center max-w-4xl mx-auto mb-24 w-full">
+                <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 text-center max-w-[1400px] mx-auto mb-24 w-full">
                     <div className="hidden md:block absolute top-[28px] left-[16%] right-[16%] h-[2px] border-t-2 border-dashed border-gray-200 z-0"></div>
 
                     <div
@@ -78,7 +78,7 @@ export default function HowItWorksSection() {
 
                 {/* Big Chat UI Container */}
                 <div
-                    className="relative w-full max-w-[1024px] h-[500px] bg-gradient-to-br from-blue-500 to-blue-600 rounded-[2rem] shadow-[0_20px_50px_-15px_rgba(37,99,235,0.4)] transition-all duration-700 ease-out flex mt-8"
+                    className="relative w-full max-w-[1200px] h-[500px] bg-gradient-to-br from-blue-500 to-blue-600 rounded-[2rem] shadow-[0_20px_50px_-15px_rgba(37,99,235,0.4)] transition-all duration-700 ease-out flex mt-8"
                     style={{
                         opacity: isVisible ? 1 : 0,
                         transform: isVisible ? "translateY(0)" : "translateY(40px)",

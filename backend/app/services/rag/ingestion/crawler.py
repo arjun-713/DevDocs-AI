@@ -11,7 +11,14 @@ class GitHubCrawler:
             self.headers["Authorization"] = f"token {token}"
         self.client = httpx.AsyncClient(headers=self.headers, timeout=30.0, follow_redirects=True)
 
-    async def get_repo_tree(self, owner: str, repo: str, branch: str = "main") -> List[Dict]:
+    async def get_default_branch(self, owner: str, repo: str) -> str:
+        url = f"https://api.github.com/repos/{owner}/{repo}"
+        response = await self.client.get(url)
+        if response.status_code == 200:
+            return response.json().get("default_branch", "main")
+        return "main"
+
+    async def get_repo_tree(self, owner: str, repo: str, branch: str) -> List[Dict]:
         """
         Fetches the recursive file tree using GitHub Trees API.
         """
@@ -43,6 +50,11 @@ class GitHubCrawler:
             raise ValueError(f"Invalid GitHub URL: {repo_url}")
         
         owner, repo = parsed
+        
+        # Determine actual branch
+        if branch == "main" or branch is None:
+            branch = await self.get_default_branch(owner, repo)
+            
         tree = await self.get_repo_tree(owner, repo, branch)
         
         # Filter for documentation files

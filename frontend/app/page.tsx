@@ -7,8 +7,10 @@ import HowItWorksSection from "./components/HowItWorksSection";
 import FeaturesSection from "./components/FeaturesSection";
 import GitHubReposSection from "./components/GitHubReposSection";
 import Footer from "./components/Footer";
+import { useRouter } from "next/navigation";
 
 export default function Hero() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -37,41 +39,8 @@ export default function Hero() {
     const text = textOverride || inputValue;
     if (!text.trim()) return;
 
-    if (!isExpanded) setIsExpanded(true);
-
-    const newMessages = [...messages, { role: "user" as const, content: text }];
-    setMessages(newMessages);
-    setInputValue("");
-    setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      setIsTyping(false);
-      const responses = [
-        "I've analyzed your repo. The core architecture relies on an event-driven system using React hooks.",
-        "Here is a summary of the authentication flow: it uses JWT tokens stored in HTTP-only cookies.",
-        "Yes, the project supports Docker. You can run `docker-compose up` to start all services.",
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-      let currentIdx = 0;
-      setMessages((prev) => [...prev, { role: "ai", content: "" }]);
-
-      const interval = setInterval(() => {
-        if (currentIdx < randomResponse.length) {
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            return [
-              ...prev.slice(0, -1),
-              { ...last, content: randomResponse.substring(0, currentIdx + 1) },
-            ];
-          });
-          currentIdx++;
-        } else {
-          clearInterval(interval);
-        }
-      }, 30);
-    }, 1200);
+    // Use router to navigate to the chat page with the repo URL encoded as a parameter
+    router.push(`/chat?repo=${encodeURIComponent(text.trim())}`);
   };
 
   if (!mounted) return null;
@@ -102,17 +71,17 @@ export default function Hero() {
         }
       `}} />
 
-      <div className="min-h-screen bg-white font-dm pb-8 flex justify-center w-full">
+      <div className="min-h-screen bg-white font-dm pb-8 flex flex-col items-center w-full">
         {/* Main Hero Container */}
         <div
-          className="w-[96vw] max-w-[1400px] bg-[#f5f5f7] dotted-bg mt-0 rounded-[2.5rem] px-6 lg:px-12 pb-6 lg:pb-12 pt-0 lg:pt-0 relative overflow-hidden flex flex-col items-center transition-all duration-[800ms] ease-out shadow-sm"
+          className="w-full max-w-none bg-[#f5f5f7] dotted-bg mt-0 rounded-none px-6 lg:px-12 pb-6 lg:pb-12 pt-2 relative overflow-hidden flex flex-col items-center transition-all duration-[800ms] ease-out shadow-sm"
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? "translateY(0)" : "translateY(30px)"
           }}
         >
           {/* Navbar Inside Container */}
-          <header className="w-full h-16 bg-white/70 backdrop-blur-md rounded-2xl rounded-t-none flex items-center justify-between px-6 z-50 mb-8 shadow-sm border border-white/50 border-t-0">
+          <header className="w-full max-w-[1800px] h-16 bg-white/70 backdrop-blur-md rounded-2xl flex items-center justify-between px-6 z-50 mb-8 mt-2 shadow-sm border border-white/50">
             <div className="flex items-center gap-2">
               <div className="flex grid-cols-2 grid-rows-2 gap-[2px]">
                 <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
@@ -139,7 +108,7 @@ export default function Hero() {
           {/* Floating UI Widgets */}
           {/* Top Left - AI Summary Sticky Note */}
           <div
-            className="hidden lg:flex absolute top-[20%] left-[8%] w-60 h-64 bg-yellow-100 rounded-lg shadow-md p-5 flex-col transform rotate-[-3deg] transition-all duration-700 ease-out z-10"
+            className="hidden lg:flex absolute top-[20%] left-[2%] xl:left-[8%] 2xl:left-[14%] w-60 h-64 bg-yellow-100 rounded-lg shadow-md p-5 flex-col transform rotate-[-3deg] transition-all duration-700 ease-out z-10"
             style={{
               opacity: mounted ? 1 : 0,
               transform: mounted ? "rotate(-3deg) translateY(0)" : "rotate(-3deg) translateY(20px)",
@@ -152,15 +121,15 @@ export default function Hero() {
               <Sparks className="w-4 h-4 text-yellow-600 opacity-70" strokeWidth={2} />
             </div>
             <div className="text-[11px] text-gray-800 font-medium leading-snug font-sora flex flex-col gap-2">
-              <p><span className="text-gray-500 font-dm text-[10px] uppercase">Query:</span><br />"How does Vite handle HMR?"</p>
-              <p><span className="text-gray-500 font-dm text-[10px] uppercase">Answer:</span><br />"Vite uses native ES modules for HMR. When a file changes, only the affected module is invalidated..."</p>
+              <p><span className="text-gray-500 font-dm text-[10px] uppercase">Query:</span><br />&quot;How does Vite handle HMR?&quot;</p>
+              <p><span className="text-gray-500 font-dm text-[10px] uppercase">Answer:</span><br />&quot;Vite uses native ES modules for HMR. When a file changes, only the affected module is invalidated...&quot;</p>
               <p className="flex items-center gap-1 mt-1"><PageIcon className="w-3.5 h-3.5 text-blue-600" /> docs/guide/hmr.md</p>
             </div>
           </div>
 
           {/* Top Right - Live Chat Preview */}
           <div
-            className="hidden lg:flex absolute top-[12%] right-[10%] w-72 bg-white rounded-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] p-4 flex-col transition-all duration-700 ease-out z-10"
+            className="hidden lg:flex absolute top-[12%] right-[2%] xl:right-[8%] 2xl:right-[14%] w-72 bg-white rounded-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] p-4 flex-col transition-all duration-700 ease-out z-10"
             style={{
               opacity: mounted ? 1 : 0,
               transform: mounted ? "translateY(0)" : "translateY(20px)",
@@ -179,7 +148,7 @@ export default function Hero() {
               <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
                 <p className="text-[11px] font-mono text-gray-500 mb-1.5">guide/why.md · line 34</p>
                 <p className="text-xs text-gray-700 leading-snug italic border-l-2 border-blue-400 pl-2">
-                  "...because Vite serves source code over native ESM, the browser takes over..."
+                  &quot;...because Vite serves source code over native ESM, the browser takes over...&quot;
                 </p>
               </div>
             </div>

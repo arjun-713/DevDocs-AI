@@ -45,28 +45,54 @@ class RAGProcessor:
     async def index_documents(self, chroma_client, collection_name: str, documents: List[Document]):
         """
         Embeds and stores documents in ChromaDB.
-        Processes in batches of 100 to avoid API limits.
+        Uses small batches with exponential backoff to respect free-tier rate limits.
         """
+        import asyncio
+        import logging
+        import re
+
         collection = chroma_client.get_or_create_collection(name=collection_name)
         
-        batch_size = 100
+        # Small batch size to stay under 100 RPM free tier quota
+        batch_size = 10
         total_indexed = 0
+        total_batches = (len(documents) + batch_size - 1) // batch_size
         
-        for start in range(0, len(documents), batch_size):
+        for batch_num, start in enumerate(range(0, len(documents), batch_size)):
             batch = documents[start:start + batch_size]
             
             texts = [doc.page_content for doc in batch]
             metadatas = [doc.metadata for doc in batch]
             ids = [f"{doc.metadata['source']}_chunk_{start + i}" for i, doc in enumerate(batch)]
             
-            embeddings = self.embeddings.embed_documents(texts)
+            # Retry loop with exponential backoff
+            max_retries = 3
+            for attempt in range(max_retries + 1):
+                try:
+                    embeddings = await self.embeddings.aembed_documents(texts)
+                    collection.add(
+                        embeddings=embeddings,
+                        documents=texts,
+                        metadatas=metadatas,
+                        ids=ids
+                    )
+                    total_indexed += len(ids)
+                    logging.info(f"Indexed batch {batch_num + 1}/{total_batches} ({total_indexed}/{len(documents)} chunks)")
+                    break  # Success — exit retry loop
+                except Exception as e:
+                    error_str = str(e)
+                    if "RESOURCE_EXHAUSTED" in error_str or "429" in error_str:
+                        # Try to extract retry delay from the error message
+                        delay_match = re.search(r'retry in (\d+)', error_str, re.IGNORECASE)
+                        wait_time = int(delay_match.group(1)) + 5 if delay_match else min(30 * (2 ** attempt), 120)
+                        logging.warning(f"Rate limited on batch {batch_num + 1}. Waiting {wait_time}s before retry {attempt + 1}/{max_retries}...")
+                        await asyncio.sleep(wait_time)
+                        if attempt == max_retries:
+                            raise  # Exhausted retries
+                    else:
+                        raise  # Non-rate-limit error, propagate immediately
             
-            collection.add(
-                embeddings=embeddings,
-                documents=texts,
-                metadatas=metadatas,
-                ids=ids
-            )
-            total_indexed += len(ids)
+            # Inter-batch delay to stay under quota
+            await asyncio.sleep(3)
         
         return total_indexed

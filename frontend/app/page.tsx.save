@@ -1,0 +1,415 @@
+OAOOOAAOBOOOOm"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import Head from "next/head";
+
+export default function Hero() {
+  const [mounted, setMounted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [messages, setMessages] = useState<{ role: "user" | "ai"; content: string }[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isTyping]);
+
+  const handleChipClick = (text: string) => {
+    setInputValue(text);
+    handleSubmit(null, text);
+  };
+
+  const handleSubmit = (e: React.FormEvent | null, textOverride?: string) => {
+    if (e) e.preventDefault();
+    const text = textOverride || inputValue;
+    if (!text.trim()) return;
+
+    if (!isExpanded) setIsExpanded(true);
+
+    const newMessages = [...messages, { role: "user" as const, content: text }];
+    setMessages(newMessages);
+    setInputValue("");
+    setIsTyping(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      setIsTyping(false);
+      const responses = [
+        "I've analyzed your repo. The core architecture relies on an event-driven system using React hooks.",
+        "Here is a summary of the authentication flow: it uses JWT tokens stored in HTTP-only cookies.",
+        "Yes, the project supports Docker. You can run `docker-compose up` to start all services.",
+      ];
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+
+      let currentIdx = 0;
+      setMessages((prev) => [...prev, { role: "ai", content: "" }]);
+
+      const interval = setInterval(() => {
+        if (currentIdx < randomResponse.length) {
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            return [
+              ...prev.slice(0, -1),
+              { ...last, content: randomResponse.substring(0, currentIdx + 1) },
+            ];
+          });
+          currentIdx++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 30);
+    }, 1200);
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@700&family=DM+Sans:wght@400;500;700&display=swap');
+        
+        .font-sora { font-family: 'Sora', sans-serif; }
+        .font-dm { font-family: 'DM Sans', sans-serif; }
+        
+        .dotted-bg {
+          background-image: radial-gradient(#e0e0e0 2px, transparent 2px);
+          background-size: 24px 24px;
+        }
+
+        .dot-bounce {
+          animation: dot-bounce 1.4s infinite ease-in-out both;
+        }
+        .dot-bounce:nth-child(1) { animation-delay: -0.32s; }
+        .dot-bounce:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes dot-bounce {
+          0%, 80%, 100% { transform: scale(0); }
+          40% { transform: scale(1); }
+        }
+      `}} />
+
+      <div className="min-h-screen bg-white font-dm pb-8 flex justify-center w-full">
+        {/* Main Hero Container */}
+        <div
+          className="w-[96vw] max-w-[1400px] bg-[#f5f5f7] dotted-bg mt-6 rounded-[2.5rem] p-6 lg:p-12 relative overflow-hidden flex flex-col items-center transition-all duration-[800ms] ease-out shadow-sm"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? "translateY(0)" : "translateY(30px)"
+          }}
+        >
+          {/* Navbar Inside Container */}
+          <header className="w-full h-16 bg-white/70 backdrop-blur-md rounded-2xl flex items-center justify-between px-6 z-50 mb-16 shadow-sm border border-white/50">
+            <div className="flex items-center gap-2">
+              <div className="flex grid-cols-2 grid-rows-2 gap-[2px]">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div>
+              </div>
+              <span className="font-sora font-bold text-xl text-[#0f0f0f] ml-1">DevDocs AI</span>
+            </div>
+
+            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+              <a href="#" className="hover:text-[#0f0f0f] transition-colors">Features</a>
+              <a href="#" className="hover:text-[#0f0f0f] transition-colors">Solutions</a>
+              <a href="#" className="hover:text-[#0f0f0f] transition-colors">Resources</a>
+              <a href="#" className="hover:text-[#0f0f0f] transition-colors">Pricing</a>
+            </nav>
+
+            <div className="flex items-center gap-4">
+              <button className="text-sm font-medium text-[#0f0f0f] hover:text-blue-600 transition-colors hidden md:block">Sign in</button>
+              <button className="px-5 py-2.5 border border-gray-200 bg-white hover:bg-gray-50 text-[#0f0f0f] text-sm font-medium rounded-full shadow-sm transition-all duration-300">
+                Get demo
+              </button>
+            </div>
+          </header>
+
+          {/* Floating UI Widgets */}
+          {/* Top Left - AI Summary Sticky Note */}
+          <div
+            className="hidden lg:flex absolute top-[20%] left-[8%] w-60 h-64 bg-yellow-100 rounded-lg shadow-md p-5 flex-col transform rotate-[-3deg] transition-all duration-700 ease-out z-10"
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "rotate(-3deg) translateY(0)" : "rotate(-3deg) translateY(20px)",
+              transitionDelay: "100ms"
+            }}
+          >
+            <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-red-500 shadow-sm border-2 border-red-600 z-20"></div>
+            <div className="flex justify-between items-start mb-3 mt-1">
+              <h3 className="font-bold text-gray-800 text-sm">✨ AI Summary</h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-yellow-600 opacity-70">
+                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+              </svg>
+            </div>
+            <p className="text-base text-gray-800 font-medium italic leading-relaxed font-sora mt-2">
+              The DevDocs AI repository focuses on creating a seamless chat experience for codebase reading.
+            </p>
+          </div>
+
+          {/* Top Right - Live Chat Preview */}
+          <div
+            className="hidden lg:flex absolute top-[12%] right-[10%] w-72 bg-white rounded-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] p-4 flex-col transition-all duration-700 ease-out z-10"
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transitionDelay: "200ms"
+            }}
+          >
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+                  <span className="text-blue-600 text-xs">AI</span>
+                </div>
+                <span className="font-bold text-sm text-gray-800">Live Agent</span>
+              </div>
+              <span className="text-xs text-gray-400">Now</span>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="bg-gray-100 rounded-2xl rounded-tr-sm p-3 self-end ml-8">
+                <p className="text-xs text-gray-700">Can you explain the main.py?</p>
+              </div>
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-sm p-3 self-start mr-8 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full dot-bounce"></div>
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full dot-bounce"></div>
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full dot-bounce"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Left - Task Automation Card (ChronoTask style) */}
+          <div
+            className="hidden lg:flex absolute bottom-[10%] left-[5%] w-72 bg-white/90 backdrop-blur-sm rounded-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.1)] p-5 flex-col transition-all duration-700 ease-out z-10"
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transitionDelay: "300ms"
+            }}
+          >
+            <h3 className="font-bold text-gray-800 text-sm mb-4">Today's AI Suggestions</h3>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-orange-100 flex items-center justify-center text-[8px]">🔴</div>
+                    <span className="text-xs font-bold text-gray-700">Optimize Crawler</span>
+                  </div>
+                  <div className="flex -space-x-1">
+                    <div className="w-4 h-4 rounded-full bg-gray-200 border border-white"></div>
+                    <div className="w-4 h-4 rounded-full bg-blue-200 border border-white"></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400 min-w-8">Sep 10</span>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-orange-500 w-[60%] rounded-full"></div>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500">60%</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-green-100 flex items-center justify-center text-[8px]">🟢</div>
+                    <span className="text-xs font-bold text-gray-700">Review Codebase</span>
+                  </div>
+                  <div className="flex -space-x-1">
+                    <div className="w-4 h-4 rounded-full bg-purple-200 border border-white"></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400 min-w-8">Sep 18</span>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 w-[112%] rounded-full"></div>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500">112%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Right - Integrations Card */}
+          <div
+            className="hidden lg:flex absolute bottom-[12%] right-[8%] w-64 bg-white/90 backdrop-blur-sm rounded-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.1)] p-5 flex-col transition-all duration-700 ease-out z-10"
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transitionDelay: "400ms"
+            }}
+          >
+            <h3 className="font-bold text-gray-800 text-sm mb-4">100+ Integrations</h3>
+            <div className="flex justify-between items-center px-1">
+              <div className="w-12 h-12 bg-white rounded-xl shadow-[0_4px_10px_-2px_rgba(0,0,0,0.08)] flex items-center justify-center text-xl transform hover:-translate-y-1 transition-transform cursor-pointer border border-gray-50">
+                📧
+              </div>
+              <div className="w-12 h-12 bg-white rounded-xl shadow-[0_4px_10px_-2px_rgba(0,0,0,0.08)] flex items-center justify-center w-max p-2 transform scale-110 z-10 hover:-translate-y-1 transition-transform cursor-pointer border border-gray-50">
+                {/* Slack-ish SVG icon placeholder */}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-500">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+              </div>
+              <div className="w-12 h-12 bg-white rounded-xl shadow-[0_4px_10px_-2px_rgba(0,0,0,0.08)] flex items-center justify-center text-xl transform hover:-translate-y-1 transition-transform cursor-pointer border border-gray-50">
+                📅
+              </div>
+            </div>
+          </div>
+
+          {/* Center Content */}
+          <div className="flex flex-col items-center mt-12 md:mt-24 w-full max-w-3xl relative z-20">
+            {/* Center Product Icon */}
+            <div className="w-16 h-16 bg-white rounded-2xl shadow-lg border border-gray-100 flex grid-cols-2 grid-rows-2 gap-[3px] p-4 mb-8">
+              <div className="w-full h-full rounded-full bg-blue-500"></div>
+              <div className="w-full h-full rounded-full bg-gray-800"></div>
+              <div className="w-full h-full rounded-full bg-gray-800"></div>
+              <div className="w-full h-full rounded-full bg-gray-800"></div>
+            </div>
+
+            {/* Headline */}
+            <h1 className="font-sora text-5xl md:text-[5.5rem] leading-[1.1] text-center font-bold tracking-tight text-[#0f0f0f] mb-2">
+              Talk to your code,
+            </h1>
+            <h1 className="font-sora text-5xl md:text-[5.5rem] leading-[1.1] text-center font-bold tracking-tight text-[#9ca3af] opacity-80 mb-6">
+              all in one place
+            </h1>
+
+            {/* Subheadline */}
+            <p className="text-lg md:text-xl text-gray-500 text-center mb-12 max-w-lg font-medium">
+              Efficiently search your repositories and boost productivity with AI.
+            </p>
+
+            {/* AI Chat Interface */}
+            <div
+              className={`w-full max-w-2xl bg-white shadow-xl shadow-gray-200/50 border border-gray-200 rounded-[2rem] p-2 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${isExpanded ? 'h-[400px]' : 'h-auto'}`}
+            >
+              {/* Chat Thread Area (Visible only when expanded) */}
+              {isExpanded && (
+                <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 mb-2 scrollbar-thin scrollbar-thumb-gray-200">
+                  <div className="flex flex-col gap-4 h-full pt-2">
+                    {messages.length === 0 && (
+                      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                        Start a conversation below
+                      </div>
+                    )}
+
+                    {messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex max-w-[85%] ${msg.role === "user" ? "self-end" : "self-start"} animate-in slide-in-from-bottom-2 fade-in duration-300`}
+                      >
+                        {msg.role === "ai" && (
+                          <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mr-2 shrink-0 mt-1">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-600">
+                              <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                            </svg>
+                          </div>
+                        )}
+                        <div
+                          className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === "user"
+                              ? "bg-blue-600 text-white rounded-br-sm shadow-md shadow-blue-600/20"
+                              : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm"
+                            }`}
+                        >
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+
+                    {isTyping && (
+                      <div className="flex max-w-[85%] self-start animate-in fade-in duration-300">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mr-2 shrink-0 mt-1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-600">
+                            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                          </svg>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm shadow-sm px-4 py-4 flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full dot-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full dot-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full dot-bounce"></div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+              )}
+
+              {/* Primary Input Bar */}
+              <form
+                onSubmit={(e) => handleSubmit(e)}
+                className={`relative flex items-center w-full bg-white rounded-full ${!isExpanded ? 'h-14 shadow-sm border border-gray-100' : 'h-14 mt-auto border-t border-gray-100'} ring-0 focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-2 transition-all duration-300`}
+              >
+                {/* AI Sparkle Icon Left */}
+                <div className="absolute left-2 w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center shadow-inner">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                  </svg>
+                </div>
+
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder={isExpanded ? "Reply..." : "Ask anything about your codebase..."}
+                  className="w-full h-full pl-16 pr-14 bg-transparent border-none outline-none text-gray-800 placeholder-gray-400 text-[15px] font-medium"
+                />
+
+                {/* Send Button Right */}
+                <button
+                  type="submit"
+                  disabled={!inputValue.trim()}
+                  className="absolute right-2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:bg-blue-600 transition-all duration-300"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </form>
+            </div>
+
+            {/* Suggestion Chips */}
+            <div
+              className={`flex flex-wrap items-center justify-center gap-2 md:gap-3 mt-4 transition-all duration-500 ${isExpanded ? 'opacity-0 h-0 overflow-hidden mt-0' : 'opacity-100 h-auto'}`}
+            >
+              <button
+                onClick={() => handleChipClick("Explain architecture")}
+                className="bg-white border border-gray-200 text-sm font-medium text-gray-500 rounded-full px-4 py-1.5 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:scale-105 transition-all duration-300 shadow-sm"
+              >
+                🏗️ Explain architecture
+              </button>
+              <button
+                onClick={() => handleChipClick("How do I install locally?")}
+                className="bg-white border border-gray-200 text-sm font-medium text-gray-500 rounded-full px-4 py-1.5 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:scale-105 transition-all duration-300 shadow-sm"
+              >
+                💻 How do I install locally?
+              </button>
+              <button
+                onClick={() => handleChipClick("Show API integrations")}
+                className="bg-white border border-gray-200 text-sm font-medium text-gray-500 rounded-full px-4 py-1.5 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:scale-105 transition-all duration-300 shadow-sm"
+              >
+                🔗 Show API integrations
+              </button>
+              <button
+                onClick={() => handleChipClick("Generate test cases")}
+                className="bg-white border border-gray-200 text-sm font-medium text-gray-500 rounded-full px-4 py-1.5 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:scale-105 transition-all duration-300 shadow-sm"
+              >
+                ⚡ Generate test cases
+              </button>
+            </div>
+
+            <div className="h-24"></div> {/* spacer for bottom */}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
