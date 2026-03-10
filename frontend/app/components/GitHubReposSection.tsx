@@ -77,7 +77,7 @@ export default function GitHubReposSection() {
     }, []);
 
     return (
-        <section ref={sectionRef} className="w-full bg-[#f5f5f7] py-24 md:py-32 relative font-dm overflow-hidden">
+        <section id="works-with" ref={sectionRef} className="w-full bg-[#f5f5f7] py-16 md:py-20 relative font-dm overflow-hidden">
             <style dangerouslySetInnerHTML={{
                 __html: `
         @keyframes scroll-left {
@@ -103,7 +103,7 @@ export default function GitHubReposSection() {
 
                 {/* Header */}
                 <div
-                    className="flex flex-col items-center mb-16 transition-all duration-[600ms] ease-out px-4"
+                    className="flex flex-col items-center mb-10 transition-all duration-[600ms] ease-out px-4"
                     style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(24px)" }}
                 >
                     <div className="px-5 py-1.5 rounded-full border border-gray-200 bg-white shadow-sm text-sm text-gray-500 font-medium mb-6">
@@ -119,7 +119,7 @@ export default function GitHubReposSection() {
 
                 {/* Animated Repo Stream */}
                 <div
-                    className="relative w-full py-6 transition-all duration-700 delay-200 ease-out"
+                    className="relative w-full py-2 transition-all duration-700 delay-200 ease-out"
                     style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(24px)" }}
                 >
                     {/* Edge Fade Overlays */}

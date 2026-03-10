@@ -7,6 +7,7 @@ import HowItWorksSection from "./components/HowItWorksSection";
 import FeaturesSection from "./components/FeaturesSection";
 import GitHubReposSection from "./components/GitHubReposSection";
 import Footer from "./components/Footer";
+import { Logo, LogoIcon } from "./components/Logo";
 import { useRouter } from "next/navigation";
 
 export default function Hero() {
@@ -49,10 +50,11 @@ export default function Hero() {
     <>
       <style dangerouslySetInnerHTML={{
         __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@700&family=DM+Sans:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@700&family=DM+Sans:wght@400;500;700&family=Indie+Flower&display=swap');
         
         .font-sora { font-family: 'Sora', sans-serif; }
         .font-dm { font-family: 'DM Sans', sans-serif; }
+        .font-handwritten { font-family: 'Indie Flower', cursive; }
         
         .dotted-bg {
           background-image: radial-gradient(#e0e0e0 2px, transparent 2px);
@@ -82,20 +84,12 @@ export default function Hero() {
         >
           {/* Navbar Inside Container */}
           <header className="w-full max-w-[1800px] h-16 bg-white/70 backdrop-blur-md rounded-2xl flex items-center justify-between px-6 z-50 mb-8 mt-2 shadow-sm border border-white/50">
-            <div className="flex items-center gap-2">
-              <div className="flex grid-cols-2 grid-rows-2 gap-[2px]">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div>
-              </div>
-              <span className="font-sora font-bold text-xl text-[#0f0f0f] ml-1">◈ DevDocs AI</span>
-            </div>
+            <Logo forceDarkText={true} className="scale-90 origin-left" />
 
             <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-              <a href="#" className="hover:text-[#0f0f0f] transition-colors">How it works</a>
-              <a href="#" className="hover:text-[#0f0f0f] transition-colors">Examples</a>
-              <a href="#" className="hover:text-[#0f0f0f] transition-colors">GitHub</a>
+              <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#0f0f0f] transition-colors cursor-pointer">How it works</button>
+              <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#0f0f0f] transition-colors cursor-pointer">Features</button>
+              <button onClick={() => document.getElementById('works-with')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#0f0f0f] transition-colors cursor-pointer">Works With</button>
             </nav>
 
             <div className="flex items-center gap-4">
@@ -108,7 +102,7 @@ export default function Hero() {
           {/* Floating UI Widgets */}
           {/* Top Left - AI Summary Sticky Note */}
           <div
-            className="hidden lg:flex absolute top-[20%] left-[2%] xl:left-[8%] 2xl:left-[14%] w-60 h-64 bg-yellow-100 rounded-lg shadow-md p-5 flex-col transform rotate-[-3deg] transition-all duration-700 ease-out z-10"
+            className="hidden lg:flex absolute top-[20%] left-[1%] xl:left-[3%] 2xl:left-[6%] w-[270px] bg-yellow-100/95 rounded-sm shadow-xl p-5 flex-col transform rotate-[-3deg] transition-all duration-700 ease-out z-10"
             style={{
               opacity: mounted ? 1 : 0,
               transform: mounted ? "rotate(-3deg) translateY(0)" : "rotate(-3deg) translateY(20px)",
@@ -116,20 +110,32 @@ export default function Hero() {
             }}
           >
             <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-red-500 shadow-sm border-2 border-red-600 z-20"></div>
-            <div className="flex justify-between items-start mb-2 mt-1">
-              <h3 className="font-bold text-gray-800 text-sm">◈ DevDocs AI</h3>
+            <div className="flex justify-between items-start mb-1.5 mt-0.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5"><LogoIcon /></div>
+                <h3 className="font-bold text-gray-800 text-sm tracking-tight" style={{ fontFamily: '"Noto Sans", sans-serif' }}>DevDocs AI</h3>
+              </div>
               <Sparks className="w-4 h-4 text-yellow-600 opacity-70" strokeWidth={2} />
             </div>
-            <div className="text-[11px] text-gray-800 font-medium leading-snug font-sora flex flex-col gap-2">
-              <p><span className="text-gray-500 font-dm text-[10px] uppercase">Query:</span><br />&quot;How does Vite handle HMR?&quot;</p>
-              <p><span className="text-gray-500 font-dm text-[10px] uppercase">Answer:</span><br />&quot;Vite uses native ES modules for HMR. When a file changes, only the affected module is invalidated...&quot;</p>
-              <p className="flex items-center gap-1 mt-1"><PageIcon className="w-3.5 h-3.5 text-blue-600" /> docs/guide/hmr.md</p>
+            <div className="text-[13px] text-gray-800 font-handwritten leading-relaxed flex flex-col gap-2">
+              <div>
+                <span className="text-gray-500 font-dm text-[9px] uppercase block mb-0.5">Query:</span>
+                &quot;Explain Vite&apos;s HMR architecture?&quot;
+              </div>
+              <div>
+                <span className="text-gray-500 font-dm text-[9px] uppercase block mb-0.5">Answer:</span>
+                &quot;Vite uses native ES modules for HMR. Browsers directly import modules via HTTP. When a file changes, the server pushes an update via WebSockets, and the browser re-fetches only the changed modules. Super fast.&quot;
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 bg-yellow-200/60 p-1.5 rounded border border-yellow-300/40 w-fit">
+                <PageIcon className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-[11px] font-dm font-bold text-gray-700">docs/guide/hmr.md</span>
+              </div>
             </div>
           </div>
 
           {/* Top Right - Live Chat Preview */}
           <div
-            className="hidden lg:flex absolute top-[12%] right-[2%] xl:right-[8%] 2xl:right-[14%] w-72 bg-white rounded-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] p-4 flex-col transition-all duration-700 ease-out z-10"
+            className="hidden lg:flex absolute top-[12%] right-[1%] xl:right-[3%] 2xl:right-[6%] w-72 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] p-4 flex-col transition-all duration-700 ease-out z-10"
             style={{
               opacity: mounted ? 1 : 0,
               transform: mounted ? "translateY(0)" : "translateY(20px)",
@@ -157,15 +163,12 @@ export default function Hero() {
           {/* Center Content */}
           <div className="flex flex-col items-center mt-6 md:mt-10 w-full max-w-3xl relative z-20">
             {/* Center Product Icon */}
-            <div className="w-14 h-14 bg-white rounded-2xl shadow-lg border border-gray-100 flex grid-cols-2 grid-rows-2 gap-[3px] p-3.5 mb-5">
-              <div className="w-full h-full rounded-full bg-blue-500"></div>
-              <div className="w-full h-full rounded-full bg-gray-800"></div>
-              <div className="w-full h-full rounded-full bg-gray-800"></div>
-              <div className="w-full h-full rounded-full bg-gray-800"></div>
+            <div className="w-16 h-16 bg-white rounded-[1rem] shadow-xl shadow-blue-500/10 border border-gray-100 flex items-center justify-center p-3 mb-5 hover:scale-105 transition-transform">
+              <LogoIcon />
             </div>
 
             {/* Headline */}
-            <h1 className="font-sora text-4xl md:text-[5rem] leading-[1.1] text-center font-bold tracking-tight text-[#9ca3af] opacity-80 mb-1">
+            <h1 className="font-sora text-4xl md:text-[5rem] leading-[1.1] text-center font-bold tracking-tight text-[#0f0f0f] mb-1">
               Ask anything about
             </h1>
             <h1 className="font-sora text-4xl md:text-[5rem] leading-[1.1] text-center font-bold tracking-tight text-[#0f0f0f] mb-4">
