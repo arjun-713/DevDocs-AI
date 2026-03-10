@@ -14,6 +14,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     repo_url: str
     query: str
+    model: Optional[str] = "gemini-2.5-flash"
 
 class SourceMetadata(BaseModel):
     source: str
@@ -46,7 +47,7 @@ async def chat_with_repo(request: ChatRequest):
     try:
 
         # 2. Setup LLM and metadata
-        llm_service = LLMService(api_key=api_key)
+        llm_service = LLMService(api_key=api_key, model_name=request.model)
         
         # Create a list of sources for the frontend to display as "Source Cards"
         sources = [

@@ -34,6 +34,7 @@ async def perform_ingestion(repo_url: str, branch: str, collection_name: str, ap
         ingestion_status[collection_name] = {"status": "processing", "progress": 0}
         
         # 1. Crawl
+        ingestion_status[collection_name]["progress"] = 5
         async with GitHubCrawler() as crawler:
             crawler_result = await crawler.crawl(repo_url, branch)
         
@@ -41,15 +42,20 @@ async def perform_ingestion(repo_url: str, branch: str, collection_name: str, ap
             ingestion_status[collection_name] = {"status": "failed", "error": "No documentation files found"}
             return
 
-        ingestion_status[collection_name]["progress"] = 50
+        ingestion_status[collection_name]["progress"] = 40
 
         # 2. Process and Chunk
         processor = RAGProcessor(api_key=api_key)
         chunks = processor.process_docs(crawler_result.files)
 
-        # 3. Index in Chroma
+        ingestion_status[collection_name]["progress"] = 50
+
+        # 3. Index in Chroma with progress callback
+        def update_progress(pct):
+            ingestion_status[collection_name]["progress"] = pct
+
         client = get_chroma_client()
-        await processor.index_documents(client, collection_name, chunks)
+        await processor.index_documents(client, collection_name, chunks, progress_callback=update_progress)
 
         ingestion_status[collection_name] = {
             "status": "completed", 

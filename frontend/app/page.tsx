@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Head from "next/head";
 import { Page as PageIcon, Link as LinkIcon, Sparks } from "iconoir-react";
 import HowItWorksSection from "./components/HowItWorksSection";
 import FeaturesSection from "./components/FeaturesSection";
@@ -19,6 +18,7 @@ export default function Hero() {
   const [isTyping, setIsTyping] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const heroInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -37,11 +37,20 @@ export default function Hero() {
 
   const handleSubmit = (e: React.FormEvent | null, textOverride?: string) => {
     if (e) e.preventDefault();
-    const text = textOverride || inputValue;
-    if (!text.trim()) return;
+    let text = textOverride || inputValue;
+    text = text.trim();
+    if (!text) return;
+
+    if (!text.startsWith("http://") && !text.startsWith("https://")) {
+      if (text.startsWith("github.com/")) {
+        text = "https://" + text;
+      } else {
+        text = "https://github.com/" + text;
+      }
+    }
 
     // Use router to navigate to the chat page with the repo URL encoded as a parameter
-    router.push(`/chat?repo=${encodeURIComponent(text.trim())}`);
+    router.push(`/chat?repo=${encodeURIComponent(text)}`);
   };
 
   if (!mounted) return null;
@@ -71,12 +80,22 @@ export default function Hero() {
           0%, 80%, 100% { transform: scale(0); }
           40% { transform: scale(1); }
         }
+
+        @keyframes pulse-ring {
+          0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+          70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .input-pulse {
+          animation: pulse-ring 1s ease-out;
+        }
       `}} />
 
       <div className="min-h-screen bg-white font-dm pb-8 flex flex-col items-center w-full">
         {/* Main Hero Container */}
         <div
           className="w-full max-w-none bg-[#f5f5f7] dotted-bg mt-0 rounded-none px-6 lg:px-12 pb-6 lg:pb-12 pt-2 relative overflow-hidden flex flex-col items-center transition-all duration-[800ms] ease-out shadow-sm"
+          id="hero-section"
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? "translateY(0)" : "translateY(30px)"
@@ -93,7 +112,19 @@ export default function Hero() {
             </nav>
 
             <div className="flex items-center gap-4">
-              <button className="px-5 py-2.5 border border-gray-200 bg-white hover:bg-gray-50 text-[#0f0f0f] text-sm font-medium rounded-full shadow-sm transition-all duration-300 flex items-center gap-1.5 group">
+              <button
+                onClick={() => {
+                  document.getElementById('hero-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setTimeout(() => {
+                    if (heroInputRef.current) {
+                      heroInputRef.current.focus();
+                      heroInputRef.current.classList.add('input-pulse');
+                      setTimeout(() => heroInputRef.current?.classList.remove('input-pulse'), 1100);
+                    }
+                  }, 600);
+                }}
+                className="px-5 py-2.5 border border-gray-200 bg-white hover:bg-gray-50 text-[#0f0f0f] text-sm font-medium rounded-full shadow-sm transition-all duration-300 flex items-center gap-1.5 group cursor-pointer"
+              >
                 Try it free <span className="text-gray-400 group-hover:translate-x-0.5 transition-transform duration-150">→</span>
               </button>
             </div>
@@ -239,6 +270,7 @@ export default function Hero() {
                 className={`relative flex items-center w-full bg-white rounded-full ${!isExpanded ? 'h-14 shadow-sm border border-gray-100' : 'h-14 mt-auto border-t border-gray-100'} ring-0 focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-2 transition-all duration-300`}
               >
                 <input
+                  ref={heroInputRef}
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Base Container: subtle light background or transparent. We'll use transparent for maximum versatility -->
+  <rect width="512" height="512" rx="112" fill="transparent"/>
+  
+  <!-- Document Shape -->
+  <!-- Clean blue (#2563EB) -->
+  <path d="M144 64 C117.5 64 96 85.5 96 112 V400 C96 426.5 117.5 448 144 448 H368 C394.5 448 416 426.5 416 400 V176 L304 64 H144 Z" fill="#2563EB"/>
+  
+  <!-- Fold -->
+  <!-- Slightly darker blue for the fold fold to give flat geometric depth -->
+  <path d="M416 176 H320 C311.2 176 304 168.8 304 160 V64 L416 176 Z" fill="#1D4ED8"/>
+  
+  <!-- Document Lines (White) -->
+  <rect x="160" y="176" width="192" height="32" rx="16" fill="#FFFFFF"/>
+  <rect x="160" y="256" width="144" height="32" rx="16" fill="#FFFFFF"/>
+  
+  <!-- Bottom line replaced with Chat Bubble Tail element -->
+  <!-- Dark navy accent (#0F172A) -->
+  <path d="M160 336 H272 C289.7 336 304 350.3 304 368 V384 C304 401.7 289.7 416 272 416 H208 L160 448 V416 H160 C142.3 416 128 401.7 128 384 V368 C128 350.3 142.3 336 160 336 Z" fill="#0F172A"/>
+  
+  <!-- Tiny blinking cursor / typing dots inside the chat bubble -->
+  <circle cx="184" cy="376" r="8" fill="#FFFFFF"/>
+  <circle cx="216" cy="376" r="8" fill="#FFFFFF"/>
+  <circle cx="248" cy="376" r="8" fill="#FFFFFF"/>
+</svg>

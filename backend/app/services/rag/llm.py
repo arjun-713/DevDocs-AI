@@ -4,12 +4,14 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.documents import Document
 
 class LLMService:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model=model_name,
             google_api_key=api_key,
             streaming=True,
-            temperature=0.2
+            temperature=0.2,
+            timeout=120,
+            max_retries=2,
         )
 
     def _build_prompt(self, query: str, context_docs: List[Document]) -> List[SystemMessage | HumanMessage]:

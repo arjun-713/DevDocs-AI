@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-import os
 from pathlib import Path
 
 # Load .env from project root regardless of where uvicorn is started

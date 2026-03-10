@@ -59,6 +59,9 @@ export default function Footer() {
                             <a href="#" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
                                 <span className="text-gray-300 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all duration-150">→</span> GitHub
                             </a>
+                            <a href="https://github.com/arjun-713/DevDocs-AI#readme" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
+                                <span className="text-gray-300 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all duration-150">→</span> How to use
+                            </a>
                             <a href="#" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
                                 <span className="text-gray-300 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all duration-150">→</span> Built with
                             </a>

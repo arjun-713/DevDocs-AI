@@ -63,8 +63,13 @@ class GitHubCrawler:
             for item in tree if item["type"] == "blob" and is_doc_file(item["path"])
         ]
 
-        # Fetch contents in parallel with controlled concurrency
-        semaphore = asyncio.Semaphore(10) # 10 parallel requests at a time
+        # Cap total files to prevent huge repos from overwhelming the system
+        MAX_FILES = 200
+        if len(doc_files) > MAX_FILES:
+            doc_files = doc_files[:MAX_FILES]
+
+        # Fetch contents in parallel with higher concurrency
+        semaphore = asyncio.Semaphore(25)  # 25 parallel requests
         tasks = [
             self.fetch_file_content(owner, repo, doc.path, branch, semaphore)
             for doc in doc_files
