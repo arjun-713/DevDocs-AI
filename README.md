@@ -182,6 +182,4 @@ See [**DEPLOYMENT.md**](./DEPLOYMENT.md) for step-by-step instructions to deploy
 
 ---
 
-<p align="center">
-  <sub>Built with ❤️ using Next.js, FastAPI, LangChain, ChromaDB, and Gemini</sub>
-</p>
+
