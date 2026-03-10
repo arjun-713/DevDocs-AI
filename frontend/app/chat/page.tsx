@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight, Page, WarningTriangle, Database, Server, Plus } from "iconoir-react";
 import { Logo, LogoIcon } from "../components/Logo";
 import ChatMarkdown from "../components/ChatMarkdown";
 import MessageActions from "../components/MessageActions";
 
-export default function ChatPage() {
+function ChatPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const repoUrl = searchParams.get("repo") || "";
@@ -530,5 +530,20 @@ export default function ChatPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ChatPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen w-full items-center justify-center bg-[#f5f5f7]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin"></div>
+                    <p className="text-sm font-medium text-gray-400 font-sora">Loading chat...</p>
+                </div>
+            </div>
+        }>
+            <ChatPageContent />
+        </Suspense>
     );
 }

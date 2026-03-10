@@ -174,12 +174,7 @@ Full code documentation is available in the [`/docs`](./docs/) folder:
 - [**API Reference**](./docs/api.md) — Every endpoint with curl examples
 - [**RAG Pipeline**](./docs/rag-pipeline.md) — Chunking, embedding, retrieval strategy
 
----
 
-## Deployment
 
-See [**DEPLOYMENT.md**](./DEPLOYMENT.md) for step-by-step instructions to deploy on free-tier services (Vercel + Railway/Render).
-
----
 
 
