@@ -40,7 +40,7 @@ export default function FeaturesSection() {
                 </div>
 
                 {/* Bento Grid layout matching the prompt constraints */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 w-full max-w-[1400px] mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 w-full max-w-[1200px] mb-8">
 
                     {/* Card 1: Top Left (Conversational Search) */}
                     <div
@@ -123,10 +123,47 @@ export default function FeaturesSection() {
                         <p className="text-sm text-gray-500 leading-relaxed font-medium">Answers appear token by token — no loading spinners, no waiting for a wall of text. It feels like talking to someone who knows the repo.</p>
                     </div>
 
-                    {/* Card 3: Bottom Left (Local Knowledge Storage/Workflow Automation) */}
+                    {/* Card 3: Any Public Repo (Now bottom left) */}
                     <div
-                        className="lg:col-span-3 bg-white rounded-3xl p-8 flex flex-col md:flex-row gap-8 min-h-[200px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                        className="lg:col-span-2 bg-white rounded-3xl p-8 flex flex-col min-h-[350px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(20px)", transitionDelay: "300ms" }}
+                    >
+                        <div className="flex-1 bg-gray-50 rounded-2xl mb-8 overflow-hidden relative border border-gray-100 flex flex-col p-6 items-center justify-center shadow-inner">
+                            {/* UI Preview: Any Public Repo */}
+                            <style dangerouslySetInnerHTML={{
+                                __html: `
+                            @keyframes progress-load { 0% { width: 0; opacity: 1; } 50% { width: 100%; opacity: 1; } 55% { opacity: 0; } 100% { width: 0; opacity: 0; } }
+                            @keyframes pulse-active { 0%, 100% { opacity: 0.5; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+                            .progress-bar { animation: progress-load 3s ease-in-out infinite; }
+                            .active-pulse { animation: pulse-active 2s infinite; }
+                            `}} />
+                            <div className="flex flex-col gap-5 w-full max-w-[240px]">
+                                {/* GitHub URL Input Bar */}
+                                <div className="bg-white border border-gray-200 shadow-sm rounded-full p-1.5 flex items-center relative overflow-hidden h-11 w-full">
+                                    <div className="w-7 h-7 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 ml-1">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-gray-700"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" /></svg>
+                                    </div>
+                                    <span className="text-[12px] text-gray-800 font-mono ml-2.5 outline-none bg-transparent">facebook/react</span>
+
+                                    {/* Animated Progress Bar underneath */}
+                                    <div className="absolute bottom-0 left-0 h-[2px] bg-blue-500 progress-bar"></div>
+                                </div>
+
+                                {/* "Active" Badge */}
+                                <div className="self-center flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full shadow-sm mt-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 active-pulse"></div>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Connected</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 className="font-sora text-xl font-bold text-gray-900 mb-2">Any Public Repo</h3>
+                        <p className="text-sm text-gray-500 leading-relaxed font-medium">Works on any public GitHub repository — docs, guides, wikis, READMEs. If it's on GitHub and it's public, just paste the link and go.</p>
+                    </div>
+
+                    {/* Card 4: Multi-Repo Support (Now bottom right) */}
+                    <div
+                        className="lg:col-span-3 bg-white rounded-3xl p-8 flex flex-col md:flex-row gap-8 min-h-[350px] border border-gray-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                        style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(20px)", transitionDelay: "400ms" }}
                     >
                         <div className="flex-1 bg-gray-50 rounded-2xl h-[120px] md:h-auto overflow-hidden relative border border-gray-100 p-6 flex flex-col justify-center items-center shadow-inner group">
                             {/* UI Preview: Multi-Repo Support */}
@@ -163,45 +200,6 @@ export default function FeaturesSection() {
                         <div className="flex-1 flex flex-col justify-center">
                             <h3 className="font-sora text-xl font-bold text-gray-900 mb-2">Multi-Repo Support</h3>
                             <p className="text-sm text-gray-500 leading-relaxed font-medium">Load multiple repositories and switch context instantly. Each repo gets its own isolated knowledge base — no crossover, no confusion.</p>
-                        </div>
-                    </div>
-
-                    {/* Card 4: Bottom Right (Customizable Workspaces - Dashed border) */}
-                    <div
-                        className="lg:col-span-2 bg-transparent rounded-3xl p-8 flex flex-col min-h-[200px] border-[2px] border-dashed border-gray-300/80 hover:bg-white/50 hover:shadow-sm hover:-translate-y-1 transition-all duration-300"
-                        style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(20px)", transitionDelay: "400ms" }}
-                    >
-                        <div className="flex-1 rounded-2xl mb-6 flex flex-col p-2 justify-center items-center">
-                            {/* UI Preview: Any Public Repo */}
-                            <style dangerouslySetInnerHTML={{
-                                __html: `
-                            @keyframes progress-load { 0% { width: 0; opacity: 1; } 50% { width: 100%; opacity: 1; } 55% { opacity: 0; } 100% { width: 0; opacity: 0; } }
-                            @keyframes pulse-active { 0%, 100% { opacity: 0.5; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
-                            .progress-bar { animation: progress-load 3s ease-in-out infinite; }
-                            .active-pulse { animation: pulse-active 2s infinite; }
-                            `}} />
-                            <div className="flex flex-col gap-5 w-full max-w-[240px]">
-                                {/* GitHub URL Input Bar */}
-                                <div className="bg-white border border-gray-200 shadow-sm rounded-full p-1.5 flex items-center relative overflow-hidden h-11 w-full">
-                                    <div className="w-7 h-7 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 ml-1">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-gray-700"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" /></svg>
-                                    </div>
-                                    <span className="text-[12px] text-gray-800 font-mono ml-2.5 outline-none bg-transparent">facebook/react</span>
-
-                                    {/* Animated Progress Bar underneath */}
-                                    <div className="absolute bottom-0 left-0 h-[2px] bg-blue-500 progress-bar"></div>
-                                </div>
-
-                                {/* "Active" Badge */}
-                                <div className="self-center flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full shadow-sm mt-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 active-pulse"></div>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Connected</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 className="font-sora text-xl font-bold text-gray-900 mb-2">Any Public Repo</h3>
-                            <p className="text-sm text-gray-500 leading-relaxed font-medium">Works on any public GitHub repository — docs, guides, wikis, READMEs. If it's on GitHub and it's public, just paste the link and go.</p>
                         </div>
                     </div>
 
