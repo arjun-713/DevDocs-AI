@@ -56,10 +56,10 @@ export default function Footer() {
                             <a href="#" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
                                 <span className="text-gray-300 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all duration-150">→</span> Examples
                             </a>
-                            <a href="#" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
+                            <a href="https://github.com/arjun-713/DevDocs-AI" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
                                 <span className="text-gray-300 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all duration-150">→</span> GitHub
                             </a>
-                            <a href="https://github.com/arjun-713/DevDocs-AI#readme" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
+                            <a href="https://github.com/arjun-713/DevDocs-AI" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
                                 <span className="text-gray-300 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all duration-150">→</span> How to use
                             </a>
                             <a href="#" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 group cursor-pointer font-medium">
@@ -181,7 +181,7 @@ export default function Footer() {
                 <div className="border-t border-gray-300 pt-5 mt-4 flex flex-col sm:flex-row gap-4 justify-between items-center relative z-10">
                     <p className="text-xs text-gray-400 font-medium tracking-wide">© 2026 DevDocs AI. Not affiliated with any indexed repositories.</p>
                     <div className="flex gap-6">
-                        <a href="https://github.com/maliik" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-gray-700 transition-colors font-medium cursor-pointer">Built by Mallik · GitHub</a>
+                        <a href="https://github.com/arjun-713" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-gray-700 transition-colors font-medium cursor-pointer">Built by arjun-713 · GitHub</a>
                     </div>
                 </div>
             </div>
