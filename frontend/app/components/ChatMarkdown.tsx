@@ -54,28 +54,49 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
    Inline markdown: bold, code, italic, links
    ───────────────────────────────────────────── */
 function renderInline(text: string, keyPrefix: string = "il"): React.ReactNode[] {
-    // Match: **bold**, `code`, *italic*, [link](url)
-    const regex = /(\*\*(.+?)\*\*)|(`(.+?)`)|((?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*))|(\[([^\]]+)\]\(([^)]+)\))/g;
+    // Match: **bold**, __bold__, `code`, *italic*, _italic_, [link](url), bare URLs
+    const regex = /(\*\*[^*]+?\*\*|__[^_]+?__|`[^`]+`|\[[^\]]+\]\(([^)]+)\)|(?<!\*)\*[^*\n]+?\*(?!\*)|(?<!_)_[^_\n]+?_(?!_)|(https?:\/\/[^\s<)]+))/g;
     const result: React.ReactNode[] = [];
     let lastIndex = 0;
-    let match;
+    let match: RegExpExecArray | null;
 
     while ((match = regex.exec(text)) !== null) {
         if (match.index > lastIndex) {
             result.push(text.slice(lastIndex, match.index));
         }
-        if (match[2]) {
-            result.push(<strong key={`${keyPrefix}-b-${match.index}`} className="font-bold">{match[2]}</strong>);
-        } else if (match[4]) {
+        const token = match[0];
+
+        if ((token.startsWith("**") && token.endsWith("**")) || (token.startsWith("__") && token.endsWith("__"))) {
+            const inner = token.slice(2, -2);
             result.push(
-                <code key={`${keyPrefix}-c-${match.index}`} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-blue-100">{match[4]}</code>
+                <strong key={`${keyPrefix}-b-${match.index}`} className="font-bold">
+                    {renderInline(inner, `${keyPrefix}-b-in-${match.index}`)}
+                </strong>
             );
-        } else if (match[6]) {
-            result.push(<em key={`${keyPrefix}-i-${match.index}`} className="italic">{match[6]}</em>);
-        } else if (match[8]) {
+        } else if (token.startsWith("`") && token.endsWith("`")) {
             result.push(
-                <a key={`${keyPrefix}-a-${match.index}`} href={match[9]} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline font-medium">{match[8]}</a>
+                <code key={`${keyPrefix}-c-${match.index}`} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-blue-100">{token.slice(1, -1)}</code>
             );
+        } else if ((token.startsWith("*") && token.endsWith("*")) || (token.startsWith("_") && token.endsWith("_"))) {
+            const inner = token.slice(1, -1);
+            result.push(
+                <em key={`${keyPrefix}-i-${match.index}`} className="italic">
+                    {renderInline(inner, `${keyPrefix}-i-in-${match.index}`)}
+                </em>
+            );
+        } else if (token.startsWith("[") && token.includes("](") && token.endsWith(")")) {
+            const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            const label = linkMatch?.[1] || token;
+            const href = linkMatch?.[2] || "#";
+            result.push(
+                <a key={`${keyPrefix}-a-${match.index}`} href={href} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline font-medium break-all">{label}</a>
+            );
+        } else if (token.startsWith("http://") || token.startsWith("https://")) {
+            result.push(
+                <a key={`${keyPrefix}-u-${match.index}`} href={token} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline font-medium break-all">{token}</a>
+            );
+        } else {
+            result.push(token);
         }
         lastIndex = match.index + match[0].length;
     }
@@ -95,19 +116,29 @@ export default function ChatMarkdown({ text }: { text: string }) {
         let i = 0;
 
         // Split into lines for block-level parsing
-        const lines = text.split("\n");
+        const normalizedText = text.replace(/\r\n?/g, "\n");
+        const lines = normalizedText.split("\n");
         let lineIdx = 0;
+
+        const splitTableRow = (row: string) =>
+            row
+                .trim()
+                .replace(/^\|/, "")
+                .replace(/\|$/, "")
+                .split("|")
+                .map((cell) => cell.trim());
 
         while (lineIdx < lines.length) {
             const line = lines[lineIdx];
 
             // ── Fenced code blocks ──
-            const codeMatch = line.match(/^```(\w*)/);
+            const codeMatch = line.match(/^(```|~~~)\s*([A-Za-z0-9_+#.-]*)\s*$/);
             if (codeMatch) {
-                const lang = codeMatch[1] || "";
+                const fence = codeMatch[1];
+                const lang = codeMatch[2] || "";
                 const codeLines: string[] = [];
                 lineIdx++;
-                while (lineIdx < lines.length && !lines[lineIdx].startsWith("```")) {
+                while (lineIdx < lines.length && !lines[lineIdx].startsWith(fence)) {
                     codeLines.push(lines[lineIdx]);
                     lineIdx++;
                 }
@@ -119,13 +150,13 @@ export default function ChatMarkdown({ text }: { text: string }) {
             }
 
             // ── Headings ──
-            const headingMatch = line.match(/^(#{1,4})\s+(.+)/);
+            const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
             if (headingMatch) {
                 const level = headingMatch[1].length;
                 const content = headingMatch[2];
                 const cls = level === 1 ? "text-xl font-bold mt-4 mb-2" :
                     level === 2 ? "text-lg font-bold mt-3 mb-1.5" :
-                        level === 3 ? "text-base font-bold mt-2 mb-1" :
+                        level <= 4 ? "text-base font-bold mt-2 mb-1" :
                             "text-sm font-bold mt-2 mb-1";
                 elements.push(
                     <div key={`h-${i++}`} className={cls}>
@@ -133,6 +164,46 @@ export default function ChatMarkdown({ text }: { text: string }) {
                     </div>
                 );
                 lineIdx++;
+                continue;
+            }
+
+            // ── Tables (GFM-style) ──
+            const nextLine = lines[lineIdx + 1] || "";
+            const tableSeparatorRegex = /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?\s*$/;
+            if (line.includes("|") && tableSeparatorRegex.test(nextLine)) {
+                const header = splitTableRow(line);
+                lineIdx += 2; // header + separator
+                const rows: string[][] = [];
+                while (lineIdx < lines.length && lines[lineIdx].includes("|") && lines[lineIdx].trim() !== "") {
+                    rows.push(splitTableRow(lines[lineIdx]));
+                    lineIdx++;
+                }
+                elements.push(
+                    <div key={`tbl-${i++}`} className="my-3 overflow-x-auto">
+                        <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden text-sm">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    {header.map((cell, idx) => (
+                                        <th key={idx} className="px-3 py-2 border-b border-gray-200 text-left font-semibold text-gray-700">
+                                            {renderInline(cell, `th-${i}-${idx}`)}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((row, rowIdx) => (
+                                    <tr key={rowIdx} className="bg-white">
+                                        {row.map((cell, colIdx) => (
+                                            <td key={colIdx} className="px-3 py-2 border-b border-gray-100 text-gray-700 align-top">
+                                                {renderInline(cell, `td-${i}-${rowIdx}-${colIdx}`)}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                );
                 continue;
             }
 
@@ -144,10 +215,10 @@ export default function ChatMarkdown({ text }: { text: string }) {
             }
 
             // ── Unordered list items ──
-            if (/^\s*[-*]\s+/.test(line)) {
+            if (/^\s*[-*+•]\s+/.test(line)) {
                 const listItems: string[] = [];
-                while (lineIdx < lines.length && /^\s*[-*]\s+/.test(lines[lineIdx])) {
-                    listItems.push(lines[lineIdx].replace(/^\s*[-*]\s+/, ""));
+                while (lineIdx < lines.length && /^\s*[-*+•]\s+/.test(lines[lineIdx])) {
+                    listItems.push(lines[lineIdx].replace(/^\s*[-*+•]\s+/, ""));
                     lineIdx++;
                 }
                 elements.push(
@@ -163,10 +234,10 @@ export default function ChatMarkdown({ text }: { text: string }) {
             }
 
             // ── Ordered list items ──
-            if (/^\s*\d+\.\s+/.test(line)) {
+            if (/^\s*\d+[.)]\s+/.test(line)) {
                 const listItems: string[] = [];
-                while (lineIdx < lines.length && /^\s*\d+\.\s+/.test(lines[lineIdx])) {
-                    listItems.push(lines[lineIdx].replace(/^\s*\d+\.\s+/, ""));
+                while (lineIdx < lines.length && /^\s*\d+[.)]\s+/.test(lines[lineIdx])) {
+                    listItems.push(lines[lineIdx].replace(/^\s*\d+[.)]\s+/, ""));
                     lineIdx++;
                 }
                 elements.push(
@@ -210,10 +281,10 @@ export default function ChatMarkdown({ text }: { text: string }) {
             while (
                 lineIdx < lines.length &&
                 lines[lineIdx].trim() !== "" &&
-                !lines[lineIdx].match(/^```/) &&
-                !lines[lineIdx].match(/^#{1,4}\s+/) &&
-                !lines[lineIdx].match(/^\s*[-*]\s+/) &&
-                !lines[lineIdx].match(/^\s*\d+\.\s+/) &&
+                !lines[lineIdx].match(/^(```|~~~)/) &&
+                !lines[lineIdx].match(/^#{1,6}\s+/) &&
+                !lines[lineIdx].match(/^\s*[-*+•]\s+/) &&
+                !lines[lineIdx].match(/^\s*\d+[.)]\s+/) &&
                 !lines[lineIdx].startsWith("> ") &&
                 !lines[lineIdx].match(/^---+$/) &&
                 !lines[lineIdx].match(/^\*\*\*+$/)
