@@ -48,111 +48,52 @@ Paste a GitHub URL, get AI-powered answers with cited sources from the actual co
 
 ```
 DevDocs AI/
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/endpoints/   # FastAPI route handlers
-│   │   ├── db/                 # ChromaDB client
-│   │   ├── services/rag/       # RAG pipeline (crawler, processor, retriever, LLM)
-│   │   └── main.py             # FastAPI app entry point
-│   └── data/                   # ChromaDB persistent storage
-├── frontend/
-│   ├── app/
-│   │   ├── components/         # React components
-│   │   ├── chat/               # Chat page
-│   │   ├── layout.tsx          # Root layout
-│   │   └── page.tsx            # Landing page
-│   └── public/                 # Static assets (favicons, logos)
-├── docs/                       # Full documentation
-├── start.sh                    # Start both servers
-├── DEPLOYMENT.md               # Deployment guide
-└── .env                        # Environment variables
+├── app/                # Next.js app directory
+├── backend/            # FastAPI backend
+│   ├── app/            # FastAPI route handlers & logic
+│   └── data/           # ChromaDB persistent storage
+├── lib/                # Shared frontend utilities
+├── public/             # Static assets
+├── .venv/              # Python virtual environment
+├── package.json        # Unified dev scripts
+└── .env                # Shared environment variables
 ```
 
 ---
 
 ## Local Setup
 
-### 1. Clone the Repository
-
+### 1. Clone & Environment
 ```bash
 git clone https://github.com/arjun-713/DevDocs-AI.git
 cd "DevDocs AI"
-```
-
-### 2. Environment Variables
-
-Create a `.env` file in the project root:
-
-```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your keys:
-
-```env
-GOOGLE_API_KEY=your_gemini_api_key_here
-```
-
-### 3. Backend Setup
-
+### 2. Install Dependencies
 ```bash
-# Create a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r backend/requirements.txt
-
-# Create data directory for ChromaDB
-mkdir -p backend/data
-```
-
-### 4. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
+# Frontend
 npm install
 
-cd ..
+# Backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
 ---
 
 ## Running Locally
 
-### Run Both Together
-
-The easiest way — uses the included `start.sh` script:
-
+Simply run:
 ```bash
-chmod +x start.sh
-./start.sh
+npm run dev
 ```
 
 This starts:
-- **Backend** at `http://localhost:8000`
-- **Frontend** at `http://localhost:3000`
+- **Frontend** (Next.js) at `http://localhost:3000`
+- **Backend** (FastAPI) at `http://localhost:8000`
 
-Press `Ctrl+C` to stop both servers.
-
-### Run Separately
-
-**Backend:**
-
-```bash
-source .venv/bin/activate
-cd backend
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-**Frontend:**
-
-```bash
-cd frontend
-npm run dev
-```
 
 ---
 
