@@ -32,6 +32,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Eval outputs
+tests/evals/eval_results.json
+eval_output.txt
+
 # OS & Misc
 .DS_Store
 Thumb.db

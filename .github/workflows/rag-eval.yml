@@ -1,0 +1,206 @@
+name: RAG Evaluation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # Allow manual triggers for debugging
+
+permissions:
+  contents: read
+  pull-requests: write  # Needed to comment on PRs
+
+jobs:
+  rag-eval:
+    name: RAG Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ──
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ──
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-eval-${{ hashFiles('requirements-eval.txt') }}
+          restore-keys: pip-eval-
+
+      - name: Install Python dependencies
+        run: pip install -r requirements-eval.txt
+
+      # ── 3. Ollama setup ──
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.ai/install.sh | sh
+
+      - name: Cache Ollama models
+        uses: actions/cache@v4
+        id: ollama-cache
+        with:
+          path: ~/.ollama/models
+          key: ollama-llama3.2-3b-v1
+
+      - name: Start Ollama and pull model
+        run: |
+          # Start Ollama server in background
+          ollama serve &
+          OLLAMA_PID=$!
+
+          # Wait for server to be ready
+          echo "Waiting for Ollama to start..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+              echo "Ollama is ready!"
+              break
+            fi
+            sleep 1
+          done
+
+          # Pull model only if not cached
+          if [ "${{ steps.ollama-cache.outputs.cache-hit }}" != "true" ]; then
+            echo "Pulling llama3.2:3b model..."
+            ollama pull llama3.2:3b
+          fi
+
+          # Verify model is available
+          ollama list
+
+      # ── 4. Cache ChromaDB data ──
+      - name: Cache ChromaDB vector store
+        uses: actions/cache@v4
+        id: chroma-cache
+        with:
+          path: backend/data
+          key: chromadb-eval-${{ hashFiles('tests/evals/ingest_repos.py') }}
+
+      # ── 5. Ingest repos (skip if cached) ──
+      - name: Ingest evaluation repos
+        if: steps.chroma-cache.outputs.cache-hit != 'true'
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          mkdir -p backend/data
+          python tests/evals/ingest_repos.py
+
+      # ── 6. Run evaluation suite ──
+      - name: Run DeepEval RAG evaluation
+        id: eval
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          deepeval test run tests/evals/test_rag_pipeline.py --verbose 2>&1 | tee eval_output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      # ── 7. Upload results artifact ──
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-eval-results
+          path: |
+            tests/evals/eval_results.json
+            eval_output.txt
+
+      # ── 8. Comment on PR with results ──
+      - name: Comment PR with eval results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let resultsText = '⚠️ Could not load eval results.';
+            let passed = false;
+
+            try {
+              const results = JSON.parse(
+                fs.readFileSync('tests/evals/eval_results.json', 'utf8')
+              );
+
+              const total = results.total_tests || 0;
+              const exitStatus = results.exit_status;
+              passed = exitStatus === 0;
+
+              const statusIcon = passed ? '✅' : '❌';
+              const statusText = passed ? 'PASSED' : 'FAILED';
+
+              let table = '| Test Case | Answer Relevancy | Contextual Recall | Contextual Relevancy |\n';
+              table += '|-----------|:---:|:---:|:---:|\n';
+
+              if (results.results) {
+                for (const r of results.results) {
+                  const ar = r.scores?.AnswerRelevancyMetric;
+                  const cr = r.scores?.ContextualRecallMetric;
+                  const cv = r.scores?.ContextualRelevancyMetric;
+
+                  const fmt = (m) => {
+                    if (!m || m.score === null) return '—';
+                    const icon = m.score >= m.threshold ? '✅' : '❌';
+                    return `${icon} ${(m.score * 100).toFixed(0)}%`;
+                  };
+
+                  table += `| \`${r.id}\` | ${fmt(ar)} | ${fmt(cr)} | ${fmt(cv)} |\n`;
+                }
+              }
+
+              resultsText = `## ${statusIcon} RAG Evaluation ${statusText}\n\n`;
+              resultsText += `**${total} test cases** evaluated against 3 metrics.\n\n`;
+              resultsText += `| Metric | Threshold |\n|--------|:---------:|\n`;
+              resultsText += `| Answer Relevancy | 70% |\n`;
+              resultsText += `| Contextual Recall | 50% |\n`;
+              resultsText += `| Contextual Relevancy | 50% |\n\n`;
+              resultsText += `### Results\n\n${table}\n`;
+              resultsText += `\n<details><summary>🔗 Full details</summary>\n\n`;
+              resultsText += `Download the \`rag-eval-results\` artifact for detailed scores and reasons.\n`;
+              resultsText += `</details>\n`;
+
+            } catch (err) {
+              resultsText = `## ⚠️ RAG Evaluation\n\nCould not parse results: ${err.message}`;
+            }
+
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(
+              (c) => c.body.includes('RAG Evaluation')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: resultsText,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: resultsText,
+              });
+            }
+
+      # ── 9. Fail the check if eval failed ──
+      - name: Check eval result
+        if: always()
+        run: |
+          EXIT_CODE="${{ steps.eval.outputs.exit_code }}"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "❌ RAG evaluation failed. PR should not be merged."
+            exit 1
+          else
+            echo "✅ RAG evaluation passed. PR is safe to merge."
+          fi
