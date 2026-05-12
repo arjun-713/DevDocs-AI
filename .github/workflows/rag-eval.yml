@@ -10,17 +10,15 @@ permissions:
   pull-requests: write
 
 jobs:
-  rag-eval:
-    name: RAG Quality Gate
+  ingest:
+    name: Ingest Evaluation Repos
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
-      # ── 1. Checkout ──
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── 2. Python setup ──
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -36,7 +34,68 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements-eval.txt
 
-      # ── 3. Ollama setup ──
+      - name: Cache eval vector store
+        uses: actions/cache@v4
+        id: chroma-cache
+        with:
+          path: tests/evals/eval_data
+          key: chromadb-eval-${{ hashFiles('tests/evals/ingest_repos.py') }}
+
+      - name: Install Ollama
+        if: steps.chroma-cache.outputs.cache-hit != 'true'
+        run: curl -fsSL https://ollama.ai/install.sh | sh
+
+      - name: Start Ollama and pull embedding model
+        if: steps.chroma-cache.outputs.cache-hit != 'true'
+        run: |
+          ollama serve &
+          for i in $(seq 1 30); do curl -s http://localhost:11434/api/tags > /dev/null 2>&1 && break; sleep 1; done
+          ollama pull nomic-embed-text
+
+      - name: Ingest evaluation repos
+        if: steps.chroma-cache.outputs.cache-hit != 'true'
+        working-directory: tests/evals
+        run: python ingest_repos.py
+
+      # Use artifact to guarantee passing the vector store to the evaluation job
+      - name: Upload vector store artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chromadb-data
+          path: tests/evals/eval_data/
+          retention-days: 1
+
+  evaluate:
+    name: Evaluate RAG Quality
+    needs: ingest
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-eval-${{ hashFiles('requirements-eval.txt') }}
+          restore-keys: pip-eval-
+
+      - name: Install Python dependencies
+        run: pip install -r requirements-eval.txt
+
+      - name: Download vector store artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chromadb-data
+          path: tests/evals/eval_data
+
       - name: Install Ollama
         run: curl -fsSL https://ollama.ai/install.sh | sh
 
@@ -47,47 +106,14 @@ jobs:
           path: ~/.ollama/models
           key: ollama-eval-models-v1
 
-      - name: Start Ollama and pull models
+      - name: Start Ollama and pull inference models
         run: |
-          # Start server in background
           ollama serve &
-
-          # Wait for server
-          echo "Waiting for Ollama..."
-          for i in $(seq 1 30); do
-            curl -s http://localhost:11434/api/tags > /dev/null 2>&1 && break
-            sleep 1
-          done
-          echo "Ollama is ready!"
-
-          # Pull all 3 models (skips if cached)
-          echo "Pulling nomic-embed-text..."
+          for i in $(seq 1 30); do curl -s http://localhost:11434/api/tags > /dev/null 2>&1 && break; sleep 1; done
           ollama pull nomic-embed-text
-
-          echo "Pulling llama3.2:3b..."
           ollama pull llama3.2:3b
-
-          echo "Pulling qwen2.5:3b..."
           ollama pull qwen2.5:3b
 
-          echo "Models available:"
-          ollama list
-
-      # ── 4. Cache eval ChromaDB data ──
-      - name: Cache eval vector store
-        uses: actions/cache@v4
-        id: chroma-cache
-        with:
-          path: tests/evals/eval_data
-          key: chromadb-eval-${{ hashFiles('tests/evals/ingest_repos.py') }}
-
-      # ── 5. Ingest repos (skip if cached) ──
-      - name: Ingest evaluation repos
-        if: steps.chroma-cache.outputs.cache-hit != 'true'
-        working-directory: tests/evals
-        run: python ingest_repos.py
-
-      # ── 6. Run evaluation suite ──
       - name: Run DeepEval RAG evaluation
         id: eval
         working-directory: tests/evals
@@ -95,7 +121,6 @@ jobs:
           deepeval test run test_rag_pipeline.py --verbose 2>&1 | tee eval_output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
 
-      # ── 7. Upload results artifact ──
       - name: Upload eval results
         if: always()
         uses: actions/upload-artifact@v4
@@ -105,7 +130,6 @@ jobs:
             tests/evals/eval_results.json
             tests/evals/eval_output.txt
 
-      # ── 8. Comment on PR with results ──
       - name: Comment PR with eval results
         if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -116,9 +140,7 @@ jobs:
             let passed = false;
 
             try {
-              const results = JSON.parse(
-                fs.readFileSync('tests/evals/eval_results.json', 'utf8')
-              );
+              const results = JSON.parse(fs.readFileSync('tests/evals/eval_results.json', 'utf8'));
               const total = results.total_tests || 0;
               const exitStatus = results.exit_status;
               passed = exitStatus === 0;
@@ -126,8 +148,7 @@ jobs:
               const statusIcon = passed ? '✅' : '❌';
               const statusText = passed ? 'PASSED' : 'FAILED';
 
-              let table = '| Test Case | Answer Relevancy | Contextual Recall | Contextual Relevancy |\n';
-              table += '|-----------|:---:|:---:|:---:|\n';
+              let table = '| Test Case | Answer Relevancy | Contextual Recall | Contextual Relevancy |\n|-----------|:---:|:---:|:---:|\n';
 
               if (results.results) {
                 for (const r of results.results) {
@@ -143,41 +164,26 @@ jobs:
                 }
               }
 
-              resultsText = `## ${statusIcon} RAG Evaluation ${statusText}\n\n`;
-              resultsText += `**${total} test cases** evaluated with fully local models.\n\n`;
-              resultsText += `| Component | Model |\n|-----------|-------|\n`;
-              resultsText += `| Embeddings | \`nomic-embed-text\` |\n`;
-              resultsText += `| Generator | \`llama3.2:3b\` |\n`;
-              resultsText += `| Judge | \`qwen2.5:3b\` |\n\n`;
-              resultsText += `| Metric | Threshold |\n|--------|:---------:|\n`;
-              resultsText += `| Answer Relevancy | 50% |\n`;
-              resultsText += `| Contextual Recall | 40% |\n`;
-              resultsText += `| Contextual Relevancy | 40% |\n\n`;
-              resultsText += `### Results\n\n${table}\n`;
+              resultsText = `## ${statusIcon} RAG Evaluation ${statusText}\n\n**${total} test cases** evaluated with fully local models.\n\n| Component | Model |\n|-----------|-------|\n| Embeddings | \`nomic-embed-text\` |\n| Generator | \`llama3.2:3b\` |\n| Judge | \`qwen2.5:3b\` |\n\n| Metric | Threshold |\n|--------|:---------:|\n| Answer Relevancy | 50% |\n| Contextual Recall | 40% |\n| Contextual Relevancy | 40% |\n\n### Results\n\n${table}\n`;
             } catch (err) {
               resultsText = `## ⚠️ RAG Evaluation\n\nCould not parse results: ${err.message}`;
             }
 
             const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
             });
             const botComment = comments.find(c => c.body.includes('RAG Evaluation'));
 
             if (botComment) {
               await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: botComment.id, body: resultsText,
+                owner: context.repo.owner, repo: context.repo.repo, comment_id: botComment.id, body: resultsText,
               });
             } else {
               await github.rest.issues.createComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number, body: resultsText,
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: resultsText,
               });
             }
 
-      # ── 9. Gate the PR ──
       - name: Check eval result
         if: always()
         run: |
