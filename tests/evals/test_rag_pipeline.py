@@ -99,13 +99,13 @@ def build_test_cases():
 judge = OllamaJudgeModel(model_name="qwen2.5:3b")
 
 answer_relevancy = AnswerRelevancyMetric(
-    threshold=0.5, model=judge, include_reason=True, async_mode=False,
+    threshold=0.5, model=judge, include_reason=False, async_mode=False,
 )
 contextual_recall = ContextualRecallMetric(
-    threshold=0.4, model=judge, include_reason=True, async_mode=False,
+    threshold=0.4, model=judge, include_reason=False, async_mode=False,
 )
 contextual_relevancy = ContextualRelevancyMetric(
-    threshold=0.4, model=judge, include_reason=True, async_mode=False,
+    threshold=0.4, model=judge, include_reason=False, async_mode=False,
 )
 
 ALL_METRICS = [answer_relevancy, contextual_recall, contextual_relevancy]
