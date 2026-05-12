@@ -61,8 +61,8 @@ class RAGProcessor:
 
         collection = chroma_client.get_or_create_collection(name=collection_name)
 
-        # Larger batches = fewer API calls = faster indexing
-        batch_size = 50
+        # Smaller batches for free tier stability
+        batch_size = 20
         total_indexed = 0
         total_batches = (len(documents) + batch_size - 1) // batch_size
 
@@ -74,7 +74,7 @@ class RAGProcessor:
             ids = [f"{doc.metadata['source']}_chunk_{start + i}" for i, doc in enumerate(batch)]
 
             # Retry loop with exponential backoff
-            max_retries = 5
+            max_retries = 8  # More retries for CI stability
             for attempt in range(max_retries + 1):
                 try:
                     embeddings = await self.embeddings.aembed_documents(texts)
@@ -97,9 +97,8 @@ class RAGProcessor:
                 except Exception as e:
                     error_str = str(e)
                     if "RESOURCE_EXHAUSTED" in error_str or "429" in error_str:
-                        # Try to extract retry delay from the error message
-                        delay_match = re.search(r'retry in (\d+)', error_str, re.IGNORECASE)
-                        wait_time = int(delay_match.group(1)) + 2 if delay_match else min(10 * (2 ** attempt), 60)
+                        # Wait significantly longer on free tier hits
+                        wait_time = min(20 * (2 ** attempt), 120) 
                         logging.warning(
                             f"Rate limited on batch {batch_num + 1}. Waiting {wait_time}s before retry {attempt + 1}/{max_retries}...")
                         await asyncio.sleep(wait_time)
@@ -108,7 +107,7 @@ class RAGProcessor:
                     else:
                         raise  # Non-rate-limit error, propagate immediately
 
-            # Minimal inter-batch delay (just enough to be polite)
-            await asyncio.sleep(0.5)
+            # Mandatory delay between batches to respect RPM limits
+            await asyncio.sleep(2.0)
 
         return total_indexed
