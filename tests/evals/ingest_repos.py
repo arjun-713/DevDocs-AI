@@ -1,8 +1,8 @@
 """
-Repo ingestion script for RAG evaluation.
+Repo ingestion script for RAG evaluation (fully local).
 
-Crawls and indexes 6 public GitHub repos using the existing
-RAG pipeline. Skips repos that are already cached in ChromaDB.
+Uses Ollama embeddings (nomic-embed-text) instead of Google API.
+Crawls 1 repo (FastAPI) and stores in a separate eval ChromaDB.
 """
 
 import asyncio
@@ -10,36 +10,25 @@ import os
 import sys
 import logging
 
-# Add backend to Python path
+# Add backend to path for the crawler (which has no API dependency)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
-from dotenv import load_dotenv
-
-# Load .env from project root
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
-
 from app.services.rag.ingestion.crawler import GitHubCrawler
-from app.services.rag.processor import RAGProcessor
-from app.db.chroma import get_chroma_client, get_repo_collection_name
+from eval_rag import EvalProcessor, get_eval_chroma_client, get_collection_name
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-# ── Target repositories ──
+# Single repo for now
 EVAL_REPOS = [
     "https://github.com/tiangolo/fastapi",
-    "https://github.com/pallets/flask",
-    "https://github.com/langchain-ai/langchain",
-    "https://github.com/supabase/supabase",
-    "https://github.com/pydantic/pydantic",
-    "https://github.com/huggingface/transformers",
 ]
 
 
-async def ingest_repo(repo_url: str, api_key: str) -> None:
-    """Ingest a single repo, skipping if already cached."""
-    collection_name = get_repo_collection_name(repo_url)
-    client = get_chroma_client()
+async def ingest_repo(repo_url: str) -> None:
+    """Ingest a single repo using local Ollama embeddings."""
+    collection_name = get_collection_name(repo_url)
+    client = get_eval_chroma_client()
 
     # Check if already ingested
     try:
@@ -49,11 +38,11 @@ async def ingest_repo(repo_url: str, api_key: str) -> None:
             logger.info(f"✅ CACHED  {repo_url} ({count} chunks)")
             return
     except Exception:
-        pass  # Collection doesn't exist yet
+        pass
 
     logger.info(f"📥 INGESTING  {repo_url} ...")
 
-    # 1. Crawl
+    # 1. Crawl (uses GitHub API — no auth needed for public repos)
     async with GitHubCrawler() as crawler:
         result = await crawler.crawl(repo_url)
 
@@ -63,35 +52,26 @@ async def ingest_repo(repo_url: str, api_key: str) -> None:
 
     logger.info(f"   Found {result.files_found} doc files")
 
-    # 2. Process & chunk
-    processor = RAGProcessor(api_key=api_key)
+    # 2. Process & chunk (no API needed)
+    processor = EvalProcessor()
     chunks = processor.process_docs(result.files)
     logger.info(f"   Created {len(chunks)} chunks")
 
-    # 3. Embed & store
-    await processor.index_documents(client, collection_name, chunks)
+    # 3. Embed with Ollama & store in ChromaDB (fully local)
+    processor.index_documents(collection_name, chunks)
     logger.info(f"✅ DONE    {repo_url} → {len(chunks)} chunks indexed")
 
 
 async def main():
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        logger.error("❌ GOOGLE_API_KEY not set. Cannot embed documents.")
-        sys.exit(1)
-
-    # Ensure data directory exists
-    data_dir = os.path.join(os.path.dirname(__file__), "..", "..", "backend", "data")
-    os.makedirs(data_dir, exist_ok=True)
-
-    logger.info(f"Ingesting {len(EVAL_REPOS)} repos for evaluation...")
+    logger.info(f"Ingesting {len(EVAL_REPOS)} repo(s) for evaluation (fully local)...")
+    logger.info("Using Ollama nomic-embed-text for embeddings — no API keys needed.")
 
     for repo_url in EVAL_REPOS:
         try:
-            await ingest_repo(repo_url, api_key)
+            await ingest_repo(repo_url)
         except Exception as e:
             logger.error(f"❌ Failed to ingest {repo_url}: {e}")
-            # Continue with remaining repos
-            continue
+            raise  # Fail fast with 1 repo
 
     logger.info("🏁 Ingestion complete!")
 

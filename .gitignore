@@ -34,6 +34,7 @@ pnpm-debug.log*
 
 # Eval outputs
 tests/evals/eval_results.json
+tests/evals/eval_data/
 eval_output.txt
 
 # OS & Misc

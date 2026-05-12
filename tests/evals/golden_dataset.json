@@ -18,105 +18,15 @@
     "expected_answer": "FastAPI handles file uploads using the UploadFile type and File() parameter. You declare an endpoint parameter with type UploadFile, and FastAPI handles multipart form data parsing. UploadFile provides async methods like read() and write()."
   },
   {
-    "id": "flask-routing",
-    "repo_url": "https://github.com/pallets/flask",
-    "question": "How do you register a route in Flask?",
-    "expected_answer": "In Flask, you register routes using the @app.route() decorator on a view function. You specify the URL rule as a string argument, and can optionally specify allowed HTTP methods with the methods parameter."
+    "id": "fastapi-response-model",
+    "repo_url": "https://github.com/tiangolo/fastapi",
+    "question": "How do you define a response model in FastAPI?",
+    "expected_answer": "You define a response model by passing a Pydantic model to the response_model parameter of the path operation decorator. FastAPI uses it to validate, serialize, and document the response output, filtering out any extra fields."
   },
   {
-    "id": "flask-configuration",
-    "repo_url": "https://github.com/pallets/flask",
-    "question": "How does Flask handle application configuration?",
-    "expected_answer": "Flask handles configuration through the app.config object, which is a dictionary subclass. You can load configuration from environment variables, Python files, objects, or dictionaries using methods like from_object(), from_envvar(), or from_mapping()."
-  },
-  {
-    "id": "flask-blueprints",
-    "repo_url": "https://github.com/pallets/flask",
-    "question": "What are Flask blueprints and why are they used?",
-    "expected_answer": "Flask blueprints are modular components that help organize a Flask application into reusable packages. They group related views, templates, and static files together. You create a Blueprint object and register it with the app using app.register_blueprint()."
-  },
-  {
-    "id": "langchain-chains",
-    "repo_url": "https://github.com/langchain-ai/langchain",
-    "question": "What is a chain in LangChain?",
-    "expected_answer": "A chain in LangChain is a sequence of calls combining LLMs, tools, or data processing steps piped together. Chains can be composed using the LCEL pipe operator (|) to create complex workflows from simple components like prompts, models, and output parsers."
-  },
-  {
-    "id": "langchain-retrievers",
-    "repo_url": "https://github.com/langchain-ai/langchain",
-    "question": "How do you create a retriever in LangChain?",
-    "expected_answer": "In LangChain, you create a retriever using a vector store's .as_retriever() method, which wraps the vector store with a retriever interface. You can configure search type and parameters like k (number of results) and score threshold."
-  },
-  {
-    "id": "langchain-prompt-templates",
-    "repo_url": "https://github.com/langchain-ai/langchain",
-    "question": "What are prompt templates in LangChain?",
-    "expected_answer": "Prompt templates in LangChain are reusable string templates with input variables that get formatted before being sent to the LLM. You create them with PromptTemplate or ChatPromptTemplate, defining placeholders that are filled at runtime with actual values."
-  },
-  {
-    "id": "langchain-output-parsers",
-    "repo_url": "https://github.com/langchain-ai/langchain",
-    "question": "How does LangChain handle output parsing?",
-    "expected_answer": "LangChain handles output parsing using output parser classes like StrOutputParser for plain text, JsonOutputParser for JSON, and PydanticOutputParser for structured data. Parsers are chained after the LLM in an LCEL pipeline to transform raw model output."
-  },
-  {
-    "id": "supabase-auth",
-    "repo_url": "https://github.com/supabase/supabase",
-    "question": "How do you authenticate users with Supabase?",
-    "expected_answer": "Supabase provides authentication through its auth module. You use supabase.auth.signUp() to register new users and supabase.auth.signInWithPassword() for login. It supports email/password, OAuth providers, magic links, and phone auth."
-  },
-  {
-    "id": "supabase-querying",
-    "repo_url": "https://github.com/supabase/supabase",
-    "question": "How do you query data from a Supabase database?",
-    "expected_answer": "You query data in Supabase using the client library's query builder. Use supabase.from_('table_name').select('*') to fetch data. You can chain filters like .eq(), .gt(), .order(), and .limit() to refine queries."
-  },
-  {
-    "id": "supabase-rls",
-    "repo_url": "https://github.com/supabase/supabase",
-    "question": "What is Row Level Security in Supabase?",
-    "expected_answer": "Row Level Security (RLS) in Supabase uses PostgreSQL policies to control which rows a user can access. You enable RLS on a table and create policies that define access rules based on the authenticated user's context using auth.uid()."
-  },
-  {
-    "id": "pydantic-models",
-    "repo_url": "https://github.com/pydantic/pydantic",
-    "question": "How do you define a data model in Pydantic?",
-    "expected_answer": "In Pydantic, you define data models by creating a class that inherits from BaseModel. Fields are declared as class attributes with type annotations. Pydantic automatically validates data against these types when creating model instances."
-  },
-  {
-    "id": "pydantic-validation-errors",
-    "repo_url": "https://github.com/pydantic/pydantic",
-    "question": "How does Pydantic handle validation errors?",
-    "expected_answer": "Pydantic raises a ValidationError exception when input data doesn't match the model's type annotations or constraints. The error contains detailed information including the field location, the type of error, and a human-readable message."
-  },
-  {
-    "id": "pydantic-field-validators",
-    "repo_url": "https://github.com/pydantic/pydantic",
-    "question": "What are field validators in Pydantic?",
-    "expected_answer": "Field validators in Pydantic use the @field_validator decorator to add custom validation logic to specific fields. They run after standard type validation and can transform or validate the field value, raising ValueError for invalid data."
-  },
-  {
-    "id": "transformers-pretrained",
-    "repo_url": "https://github.com/huggingface/transformers",
-    "question": "How do you load a pretrained model with HuggingFace Transformers?",
-    "expected_answer": "You load a pretrained model using AutoModel.from_pretrained('model-name') or a task-specific class like AutoModelForSequenceClassification. The method downloads the model weights and configuration from the Hugging Face Hub."
-  },
-  {
-    "id": "transformers-tokenizer",
-    "repo_url": "https://github.com/huggingface/transformers",
-    "question": "What is a tokenizer in HuggingFace Transformers?",
-    "expected_answer": "A tokenizer converts raw text into numerical token IDs that models can process. You load one using AutoTokenizer.from_pretrained('model-name'). It handles text encoding, special tokens, padding, and truncation."
-  },
-  {
-    "id": "transformers-pipelines",
-    "repo_url": "https://github.com/huggingface/transformers",
-    "question": "How do you use pipelines in HuggingFace Transformers?",
-    "expected_answer": "Pipelines provide a high-level API for inference. Use pipeline('task-name', model='model-name') to create one. Tasks include text-generation, sentiment-analysis, question-answering, summarization, and more. Just pass input text to get results."
-  },
-  {
-    "id": "transformers-trainer",
-    "repo_url": "https://github.com/huggingface/transformers",
-    "question": "What is the Trainer API in HuggingFace Transformers?",
-    "expected_answer": "The Trainer API is a high-level interface for training and fine-tuning models. You initialize Trainer with a model, TrainingArguments, and datasets. It handles the training loop, evaluation, logging, checkpointing, and distributed training."
+    "id": "fastapi-middleware",
+    "repo_url": "https://github.com/tiangolo/fastapi",
+    "question": "How do you add middleware to a FastAPI application?",
+    "expected_answer": "You add middleware using the @app.middleware('http') decorator on an async function that receives the request and call_next. The function can process the request before and after it reaches the endpoint, useful for logging, CORS, and timing."
   }
 ]
