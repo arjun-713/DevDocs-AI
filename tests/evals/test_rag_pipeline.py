@@ -40,113 +40,71 @@ def load_golden_dataset():
     with open(DATASET_PATH, "r") as f:
         return json.load(f)
 
-
-def build_test_cases():
-    """
-    For each golden question:
-      1. Retrieve context from eval ChromaDB (Ollama embeddings)
-      2. Generate response with Ollama llama3.2:3b
-      3. Build an LLMTestCase
-    """
-    if not check_ollama_health():
-        raise RuntimeError("Ollama is not running on localhost:11434")
-
-    dataset = load_golden_dataset()
-    retriever = EvalRetriever()
-    test_cases = []
-    test_ids = []
-
-    logger.info(f"Building {len(dataset)} test cases (fully local)...")
-
-    for item in dataset:
-        collection_name = get_collection_name(item["repo_url"])
-
-        # 1. Retrieve context chunks
-        try:
-            docs = retriever.get_relevant_documents(collection_name, item["question"], k=5)
-        except Exception as e:
-            logger.warning(f"  ⚠️  Retrieval failed for {item['id']}: {e}. Skipping.")
-            continue
-
-        retrieval_context = [doc.page_content for doc in docs]
-        context_text = "\n\n".join(
-            [f"--- SOURCE: {doc.metadata.get('source', 'unknown')} ---\n{doc.page_content}" for doc in docs]
-        )
-
-        # 2. Generate response with Ollama
-        try:
-            actual_output = generate_response(item["question"], context_text)
-        except Exception as e:
-            logger.warning(f"  ⚠️  Generation failed for {item['id']}: {e}. Skipping.")
-            continue
-
-        # 3. Build test case
-        test_case = LLMTestCase(
-            input=item["question"],
-            actual_output=actual_output,
-            expected_output=item["expected_answer"],
-            retrieval_context=retrieval_context,
-        )
-        test_cases.append(test_case)
-        test_ids.append(item["id"])
-        logger.info(f"  ✅ {item['id']}")
-
-    logger.info(f"Built {len(test_cases)}/{len(dataset)} test cases.")
-    return test_cases, test_ids
-
+DATASET = load_golden_dataset()
+TEST_IDS = [item["id"] for item in DATASET]
 
 # ── Initialize judge and metrics ──
 judge = OllamaJudgeModel(model_name="qwen2.5:3b")
 
-answer_relevancy = AnswerRelevancyMetric(
-    threshold=0.5, model=judge, include_reason=False, async_mode=False,
-)
-contextual_recall = ContextualRecallMetric(
-    threshold=0.4, model=judge, include_reason=False, async_mode=False,
-)
-contextual_relevancy = ContextualRelevancyMetric(
-    threshold=0.4, model=judge, include_reason=False, async_mode=False,
-)
-
-ALL_METRICS = [answer_relevancy, contextual_recall, contextual_relevancy]
-
-# ── Build test cases at module load ──
-TEST_CASES, TEST_IDS = build_test_cases()
-
-
-@pytest.mark.parametrize("test_case", TEST_CASES, ids=TEST_IDS)
-def test_rag_quality(test_case: LLMTestCase):
+@pytest.mark.parametrize("item", DATASET, ids=TEST_IDS)
+def test_rag_quality(item):
     """Evaluate a single RAG test case against all 3 metrics."""
-    assert_test(test_case, ALL_METRICS)
+    if not check_ollama_health():
+        raise RuntimeError("Ollama is not running on localhost:11434")
 
+    retriever = EvalRetriever()
+    collection_name = get_collection_name(item["repo_url"])
 
-def pytest_sessionfinish(session, exitstatus):
-    """Write evaluation results to JSON for CI artifact upload."""
-    results = []
-    dataset = load_golden_dataset()
+    # 1. Retrieve context chunks
+    docs = retriever.get_relevant_documents(collection_name, item["question"], k=5)
+    retrieval_context = [doc.page_content for doc in docs]
+    context_text = "\n\n".join(
+        [f"--- SOURCE: {doc.metadata.get('source', 'unknown')} ---\n{doc.page_content}" for doc in docs]
+    )
 
-    for i, tc in enumerate(TEST_CASES):
-        entry = {
-            "id": TEST_IDS[i] if i < len(TEST_IDS) else f"test_{i}",
-            "input": tc.input,
-            "actual_output": tc.actual_output,
-            "scores": {},
-        }
-        for metric in ALL_METRICS:
-            entry["scores"][metric.__class__.__name__] = {
-                "score": getattr(metric, "score", None),
-                "threshold": metric.threshold,
-                "reason": getattr(metric, "reason", None),
-            }
-        results.append(entry)
+    # 2. Generate response
+    actual_output = generate_response(item["question"], context_text)
 
-    summary = {
-        "total_tests": len(TEST_CASES),
-        "exit_status": exitstatus,
-        "results": results,
+    # 3. Build test case
+    test_case = LLMTestCase(
+        input=item["question"],
+        actual_output=actual_output,
+        expected_output=item["expected_answer"],
+        retrieval_context=retrieval_context,
+    )
+
+    # Re-instantiate metrics per test to avoid state sharing issues across workers
+    answer_relevancy = AnswerRelevancyMetric(threshold=0.5, model=judge, include_reason=False, async_mode=False)
+    contextual_recall = ContextualRecallMetric(threshold=0.4, model=judge, include_reason=False, async_mode=False)
+    contextual_relevancy = ContextualRelevancyMetric(threshold=0.4, model=judge, include_reason=False, async_mode=False)
+    metrics = [answer_relevancy, contextual_recall, contextual_relevancy]
+
+    # Run evaluation
+    try:
+        assert_test(test_case, metrics)
+        passed = True
+    except AssertionError:
+        passed = False
+
+    # Save individual result for the GitHub Action to aggregate
+    result = {
+        "id": item["id"],
+        "input": item["question"],
+        "actual_output": actual_output,
+        "passed": passed,
+        "scores": {}
     }
+    for m in metrics:
+        result["scores"][m.__class__.__name__] = {
+            "score": getattr(m, "score", None),
+            "threshold": m.threshold,
+            "reason": getattr(m, "reason", None),
+        }
 
-    with open(RESULTS_PATH, "w") as f:
-        json.dump(summary, f, indent=2, default=str)
+    res_path = os.path.join(os.path.dirname(__file__), f"result_{item['id']}.json")
+    with open(res_path, "w") as f:
+        json.dump(result, f, indent=2)
 
-    logger.info(f"📊 Results saved to {RESULTS_PATH}")
+    # Re-raise assertion if failed so pytest registers it
+    if not passed:
+        pytest.fail("One or more metrics failed")

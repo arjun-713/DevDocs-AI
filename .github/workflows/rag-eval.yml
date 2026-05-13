@@ -179,7 +179,7 @@ jobs:
         with:
           name: rag-eval-results
           path: |
-            tests/evals/eval_results.json
+            tests/evals/result_*.json
             tests/evals/eval_output.txt
 
       - name: Comment PR with eval results
@@ -188,35 +188,34 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             let resultsText = '⚠️ Could not load eval results.';
-            let passed = false;
+            let passed = true;
+            let total = 0;
+            let table = '| Test Case | Answer Relevancy | Contextual Recall | Contextual Relevancy |\n|-----------|:---:|:---:|:---:|\n';
 
             try {
-              const results = JSON.parse(fs.readFileSync('tests/evals/eval_results.json', 'utf8'));
-              const total = results.total_tests || 0;
-              const exitStatus = results.exit_status;
-              passed = exitStatus === 0;
+              const files = fs.readdirSync('tests/evals').filter(fn => fn.startsWith('result_') && fn.endsWith('.json'));
+              for (const file of files) {
+                const r = JSON.parse(fs.readFileSync(path.join('tests/evals', file), 'utf8'));
+                total++;
+                if (r.passed === false) passed = false;
+
+                const ar = r.scores?.AnswerRelevancyMetric;
+                const cr = r.scores?.ContextualRecallMetric;
+                const cv = r.scores?.ContextualRelevancyMetric;
+                const fmt = (m) => {
+                  if (!m || m.score === null) return '—';
+                  const icon = m.score >= m.threshold ? '✅' : '❌';
+                  return `${icon} ${(m.score * 100).toFixed(0)}%`;
+                };
+                table += `| \`${r.id}\` | ${fmt(ar)} | ${fmt(cr)} | ${fmt(cv)} |\n`;
+              }
 
               const statusIcon = passed ? '✅' : '❌';
               const statusText = passed ? 'PASSED' : 'FAILED';
 
-              let table = '| Test Case | Answer Relevancy | Contextual Recall | Contextual Relevancy |\n|-----------|:---:|:---:|:---:|\n';
-
-              if (results.results) {
-                for (const r of results.results) {
-                  const ar = r.scores?.AnswerRelevancyMetric;
-                  const cr = r.scores?.ContextualRecallMetric;
-                  const cv = r.scores?.ContextualRelevancyMetric;
-                  const fmt = (m) => {
-                    if (!m || m.score === null) return '—';
-                    const icon = m.score >= m.threshold ? '✅' : '❌';
-                    return `${icon} ${(m.score * 100).toFixed(0)}%`;
-                  };
-                  table += `| \`${r.id}\` | ${fmt(ar)} | ${fmt(cr)} | ${fmt(cv)} |\n`;
-                }
-              }
-
-              resultsText = `## ${statusIcon} RAG Evaluation ${statusText}\n\n**${total} test cases** evaluated with fully local models.\n\n| Component | Model |\n|-----------|-------|\n| Embeddings | \`nomic-embed-text\` |\n| Generator | \`llama3.2:3b\` |\n| Judge | \`qwen2.5:3b\` |\n\n| Metric | Threshold |\n|--------|:---------:|\n| Answer Relevancy | 50% |\n| Contextual Recall | 40% |\n| Contextual Relevancy | 40% |\n\n### Results\n\n${table}\n`;
+              resultsText = `## ${statusIcon} RAG Evaluation ${statusText}\n\n**${total} test cases** evaluated with fully local models concurrently.\n\n| Component | Model |\n|-----------|-------|\n| Embeddings | \`nomic-embed-text\` |\n| Generator | \`llama3.2:3b\` |\n| Judge | \`qwen2.5:3b\` |\n\n| Metric | Threshold |\n|--------|:---------:|\n| Answer Relevancy | 50% |\n| Contextual Recall | 40% |\n| Contextual Relevancy | 40% |\n\n### Results\n\n${table}\n`;
             } catch (err) {
               resultsText = `## ⚠️ RAG Evaluation\n\nCould not parse results: ${err.message}`;
             }
