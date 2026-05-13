@@ -115,8 +115,5 @@ Full code documentation is available in the [`/docs`](./docs/) folder:
 - [**API Reference**](./docs/api.md) — Every endpoint with curl examples
 - [**RAG Pipeline**](./docs/rag-pipeline.md) — Chunking, embedding, retrieval strategy
 
-
-
-
-
-
+---
+*Eval pipeline configured to automatically run on pull requests.*
