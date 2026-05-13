@@ -163,16 +163,12 @@ jobs:
           curl -s http://localhost:11434/api/generate \
             -d '{"model":"qwen2.5:3b","prompt":"hi","stream":false}' > /dev/null
 
-      # FIX: --workers 4 runs test cases concurrently against Ollama.
-      # This is the single biggest speedup — previously all cases ran serially.
-      # Tune the worker count up/down based on how many test cases you have.
       - name: Run DeepEval RAG evaluation
         id: eval
         working-directory: tests/evals
         run: |
           deepeval test run test_rag_pipeline.py \
             --verbose \
-            --workers 4 \
             2>&1 | tee eval_output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
 
