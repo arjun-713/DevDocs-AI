@@ -169,6 +169,7 @@ jobs:
         run: |
           deepeval test run test_rag_pipeline.py \
             --verbose \
+            -n 4 \
             2>&1 | tee eval_output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
 
