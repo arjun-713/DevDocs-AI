@@ -71,6 +71,8 @@ Never commit `.env` or API keys. Use the hosting provider’s encrypted environm
 
 Deploy the frontend from the repository root as a Next.js project. Configure `NEXT_PUBLIC_API_URL` with the deployed backend URL. Deploy the `backend/` directory as a Python service with:
 
+Pushes to `main` trigger the production frontend deployment.
+
 ```bash
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
