@@ -20,7 +20,7 @@ export default function Footer() {
     return (
         <footer
             ref={ref}
-            className={`w-full bg-[#f0f0f0] relative overflow-hidden px-6 md:px-16 py-12 lg:py-20 transition-all duration-700 ease-out font-dm min-h-[85vh] md:min-h-[100svh] flex flex-col ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+            className={`w-full bg-[#f0f0f0] relative overflow-hidden px-6 md:px-16 py-12 lg:py-16 transition-all duration-700 ease-out font-dm flex flex-col ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             style={{
                 backgroundImage: "radial-gradient(circle, #d1d1d1 1px, transparent 1px)",
                 backgroundSize: "24px 24px"
