@@ -81,7 +81,7 @@ export default function Hero() {
         }
       `}} />
 
-      <div className="min-h-screen bg-white font-dm pb-8 flex flex-col items-center w-full">
+      <div className="bg-white font-dm flex flex-col items-center w-full">
         {/* Main Hero Container */}
         <div
           className="w-full max-w-none bg-[#f5f5f7] dotted-bg mt-0 rounded-none px-6 lg:px-12 pb-6 lg:pb-12 pt-2 relative overflow-hidden flex flex-col items-center transition-all duration-[800ms] ease-out shadow-sm"
