@@ -8,7 +8,6 @@ DevDocs AI turns a public GitHub repository into a conversational, source-aware 
 - FastAPI backend for crawling GitHub documentation, embedding content, and retrieving context
 - ChromaDB for local persistent vector storage
 - Gemini for embeddings and streamed answers
-- Evaluation assets and RAG documentation kept under dedicated folders
 
 ## Product preview
 
@@ -86,9 +85,7 @@ See [docs/deployment.md](docs/deployment.md) for the complete Vercel and backend
 app/                 Next.js routes and UI components
 backend/app/         FastAPI routes and RAG services
 backend/scripts/     Backend diagnostics and smoke scripts
-docs/                Architecture, API, and deployment documentation
-EVAL_DOCS/           Evaluation methodology and CI notes
-tests/evals/         Evaluation code and datasets
+docs/                Architecture, API, deployment, and RAG documentation
 public/              Static brand assets
 ```
 
@@ -111,4 +108,4 @@ npm run build
 
 ## License
 
-This project is currently intended for development and evaluation. Add a license before distributing it as a public production product.
+This project is currently intended for development. Add a license before distributing it as a public production product.
