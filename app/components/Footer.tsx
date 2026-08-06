@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Search, Server, CheckCircle, Database } from "iconoir-react";
+import { Search, CheckCircle } from "iconoir-react";
 import { Logo } from "./Logo";
 
 export default function Footer() {

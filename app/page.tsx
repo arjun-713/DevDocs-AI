@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Page as PageIcon, Link as LinkIcon, Sparks } from "iconoir-react";
 import HowItWorksSection from "./components/HowItWorksSection";
 import FeaturesSection from "./components/FeaturesSection";
@@ -11,24 +11,13 @@ import { useRouter } from "next/navigation";
 
 export default function Hero() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<{ role: "user" | "ai"; content: string }[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isTyping]);
 
   const handleChipClick = (text: string) => {
     setInputValue(text);
@@ -50,10 +39,11 @@ export default function Hero() {
     }
 
     // Use router to navigate to the chat page with the repo URL encoded as a parameter
+    setIsExpanded(true);
+    setMessages((previous) => [...previous, { role: "user", content: text }]);
+    setIsTyping(true);
     router.push(`/chat?repo=${encodeURIComponent(text)}`);
   };
-
-  if (!mounted) return null;
 
   return (
     <>
@@ -97,8 +87,8 @@ export default function Hero() {
           className="w-full max-w-none bg-[#f5f5f7] dotted-bg mt-0 rounded-none px-6 lg:px-12 pb-6 lg:pb-12 pt-2 relative overflow-hidden flex flex-col items-center transition-all duration-[800ms] ease-out shadow-sm"
           id="hero-section"
           style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(30px)"
+            opacity: 1,
+            transform: "translateY(0)"
           }}
         >
           {/* Navbar Inside Container */}
@@ -135,8 +125,8 @@ export default function Hero() {
           <div
             className="hidden lg:flex absolute top-[20%] left-[1%] xl:left-[3%] 2xl:left-[6%] w-[270px] bg-yellow-100/95 rounded-sm shadow-xl p-5 flex-col transform rotate-[-3deg] transition-all duration-700 ease-out z-10"
             style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? "rotate(-3deg) translateY(0)" : "rotate(-3deg) translateY(20px)",
+              opacity: 1,
+              transform: "rotate(-3deg) translateY(0)",
               transitionDelay: "100ms"
             }}
           >
@@ -168,8 +158,8 @@ export default function Hero() {
           <div
             className="hidden lg:flex absolute top-[12%] right-[1%] xl:right-[3%] 2xl:right-[6%] w-72 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] p-4 flex-col transition-all duration-700 ease-out z-10"
             style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? "translateY(0)" : "translateY(20px)",
+              opacity: 1,
+              transform: "translateY(0)",
               transitionDelay: "200ms"
             }}
           >

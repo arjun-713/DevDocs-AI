@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Sparks } from "iconoir-react";
 
 export default function FeaturesSection() {
     const [isVisible, setIsVisible] = useState(false);
@@ -157,7 +156,7 @@ export default function FeaturesSection() {
                             </div>
                         </div>
                         <h3 className="font-sora text-xl font-bold text-gray-900 mb-2">Any Public Repo</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed font-medium">Works on any public GitHub repository — docs, guides, wikis, READMEs. If it's on GitHub and it's public, just paste the link and go.</p>
+                        <p className="text-sm text-gray-500 leading-relaxed font-medium">Works on any public GitHub repository — docs, guides, wikis, READMEs. If it&apos;s on GitHub and it&apos;s public, just paste the link and go.</p>
                     </div>
 
                     {/* Card 4: Multi-Repo Support (Now bottom right) */}

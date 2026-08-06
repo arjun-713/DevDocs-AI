@@ -139,7 +139,7 @@ export default function HowItWorksSection() {
                                         <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 font-mono text-[11px] text-gray-600 mb-3 overflow-x-auto whitespace-pre">
                                             <span className="text-blue-500">resolve</span>: {"{\n"}
                                             <span className="text-blue-500">alias</span>: {"{\n"}
-                                            <span className="text-green-600">'@'</span>: path.resolve(__dirname, <span className="text-green-600">'./src'</span>)
+                                            <span className="text-green-600">&apos;@&apos;</span>: path.resolve(__dirname, <span className="text-green-600">&apos;./src&apos;</span>)
                                             {"}\n"}
                                             {"}"}
                                         </div>

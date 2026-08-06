@@ -15,7 +15,6 @@ function ChatPageContent() {
     const [status, setStatus] = useState<"initializing" | "ingesting" | "ready" | "error">("initializing");
     const [errorMessage, setErrorMessage] = useState("");
     const [progress, setProgress] = useState(0);
-    const [collectionName, setCollectionName] = useState<string | null>(null);
 
     const [messages, setMessages] = useState<{ role: "user" | "ai"; content: string; sources?: { source: string; url: string }[] }[]>([]);
     const [inputValue, setInputValue] = useState("");
@@ -49,7 +48,7 @@ function ChatPageContent() {
         if (stored) {
             try {
                 setCachedRepos(JSON.parse(stored));
-            } catch (e) { }
+            } catch { }
         }
     }, []);
 
@@ -87,8 +86,6 @@ function ChatPageContent() {
                 }
 
                 const data = await res.json();
-                setCollectionName(data.collection_name);
-
                 if (data.status === "completed") {
                     setStatus("ready");
                     setProgress(100);
@@ -99,9 +96,9 @@ function ChatPageContent() {
 
                 setStatus("ingesting");
                 pollStatus(data.collection_name);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 setStatus("error");
-                setErrorMessage(err.message);
+                setErrorMessage(err instanceof Error ? err.message : "Failed to start ingestion");
             }
         };
 
@@ -130,7 +127,7 @@ function ChatPageContent() {
                 } else if (data.progress !== undefined) {
                     setProgress(data.progress);
                 }
-            } catch (err) {
+            } catch {
                 clearInterval(interval);
                 setStatus("error");
                 setErrorMessage("Lost connection to processing server.");
@@ -205,8 +202,8 @@ function ChatPageContent() {
         try {
             const result = await fetchAIResponse(query, selectedModel);
             setMessages((prev) => [...prev, { role: "ai", content: result.content, sources: result.sources }]);
-        } catch (error: any) {
-            setMessages((prev) => [...prev, { role: "ai", content: `Error: ${error.message}` }]);
+        } catch (error: unknown) {
+            setMessages((prev) => [...prev, { role: "ai", content: `Error: ${error instanceof Error ? error.message : "Unable to generate a response"}` }]);
         } finally {
             setIsStreaming(false);
         }
@@ -230,8 +227,8 @@ function ChatPageContent() {
         try {
             const result = await fetchAIResponse(userQuery, overrideModel || selectedModel);
             setMessages((prev) => prev.map((m, i) => i === msgIdx ? { role: "ai", content: result.content, sources: result.sources } : m));
-        } catch (error: any) {
-            setMessages((prev) => prev.map((m, i) => i === msgIdx ? { role: "ai", content: `Error: ${error.message}` } : m));
+        } catch (error: unknown) {
+            setMessages((prev) => prev.map((m, i) => i === msgIdx ? { role: "ai", content: `Error: ${error instanceof Error ? error.message : "Unable to regenerate the response"}` } : m));
         } finally {
             setIsStreaming(false);
         }
