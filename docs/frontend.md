@@ -24,7 +24,7 @@ This document provides a detailed overview of every key component and page in th
 **Purpose**: The main landing page for DevDocs AI.
 - **Key State**:
   - `inputValue`: Tracks the user's typed GitHub URL.
-  - `mounted` / `isExpanded` / `messages` / `isTyping`: Manages animated CSS mock UI states.
+  - `isExpanded` / `messages` / `isTyping`: Manages the animated CSS mock UI states.
 - **Implementation Note**: When the user enters a URL, the `<form>` validates the string (`https://github.com/` injection if missing) and redirects via Next.js router `router.push("/chat?repo=...")`. The `Try it free` button focuses the input via `ref.current.focus()` and runs a CSS ring pulse frame (`input-pulse`).
 
 ### `app/chat/page.tsx`
@@ -42,7 +42,7 @@ This document provides a detailed overview of every key component and page in th
 
 ## Components
 
-Located in `frontend/app/components/`.
+Located in `app/components/`.
 
 ### `ChatMarkdown.tsx`
 **Purpose**: Fully interactive Markdown renderer built iteratively.

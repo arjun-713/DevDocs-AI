@@ -1,120 +1,104 @@
 # DevDocs AI
 
-**Chat with any GitHub repository. Instantly.**
+DevDocs AI turns a public GitHub repository into a conversational, source-aware documentation assistant. Paste a repository URL, let the ingestion pipeline index its documentation, and ask focused questions with source links included in the response.
 
-Paste a GitHub URL, get AI-powered answers with cited sources from the actual codebase documentation. No digging through READMEs. No Stack Overflow rabbit holes.
+## Product overview
 
----
+- Next.js frontend with a responsive landing page and chat workspace
+- FastAPI backend for crawling GitHub documentation, embedding content, and retrieving context
+- ChromaDB for local persistent vector storage
+- Gemini for embeddings and streamed answers
+- Evaluation assets and RAG documentation kept under dedicated folders
 
-## Table of Contents
+## Architecture
 
-- [Screenshots](#screenshots)
-- [Demo](#demo)
-- [Prerequisites](#prerequisites)
-- [Project Structure](#project-structure)
-- [Local Setup](#local-setup)
-  - [1. Clone the Repository](#1-clone-the-repository)
-  - [2. Environment Variables](#2-environment-variables)
-  - [3. Backend Setup](#3-backend-setup)
-  - [4. Frontend Setup](#4-frontend-setup)
-- [Running Locally](#running-locally)
-  - [Run Both Together](#run-both-together)
-  - [Run Separately](#run-separately)
-- [Environment Variables Reference](#environment-variables-reference)
-- [Documentation](#documentation)
-- [Deployment](#deployment)
-
----
-
-## Screenshots
-
-![Hero / Landing Page](/docs/screenshots/hero.png)
-
-
-![Chat Interface](/docs/screenshots/chat.png)
-
-
-## Prerequisites
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Node.js** | 18+ | Frontend runtime |
-| **Python** | 3.10+ | Backend runtime |
-| **Gemini API Key** | — | LLM and embeddings (get from [Google AI Studio](https://aistudio.google.com/app/apikey)) |
-
----
-
-## Project Structure
-
-```
-DevDocs AI/
-├── app/                # Next.js app directory
-├── backend/            # FastAPI backend
-│   ├── app/            # FastAPI route handlers & logic
-│   └── data/           # ChromaDB persistent storage
-├── lib/                # Shared frontend utilities
-├── public/             # Static assets
-├── .venv/              # Python virtual environment
-├── package.json        # Unified dev scripts
-└── .env                # Shared environment variables
+```text
+Browser → Next.js (Vercel) → FastAPI API (Railway / Render)
+                              ├─ GitHub tree + raw-content APIs
+                              ├─ Gemini embeddings + chat generation
+                              └─ ChromaDB persistent storage
 ```
 
----
+The frontend calls `/api/v1/*`. Next.js rewrites those requests to `NEXT_PUBLIC_API_URL`, so the browser never needs to know the backend route directly.
 
-## Local Setup
+## Requirements
 
-### 1. Clone & Environment
+- Node.js 20 or newer
+- Python 3.10 or newer
+- A Google AI Studio API key
+
+## Local development
+
 ```bash
 git clone https://github.com/arjun-713/DevDocs-AI.git
-cd "DevDocs AI"
+cd DevDocs-AI
 cp .env.example .env
-```
-
-### 2. Install Dependencies
-```bash
-# Frontend
-npm install
-
-# Backend
+npm ci
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r backend/requirements.txt
-```
-
----
-
-## Running Locally
-
-Simply run:
-```bash
 npm run dev
 ```
 
-This starts:
-- **Frontend** (Next.js) at `http://localhost:3000`
-- **Backend** (FastAPI) at `http://localhost:8000`
+The frontend runs at `http://localhost:3000`; the API runs at `http://localhost:8000`. Set `GOOGLE_API_KEY` in `.env` before using ingestion or chat.
 
+To run services separately:
 
----
+```bash
+npm run dev:frontend
+npm run dev:backend
+```
 
-## Environment Variables Reference
+## Environment variables
 
-| Variable | Required | Description | Where to Get |
-|----------|----------|-------------|--------------|
-| `GOOGLE_API_KEY` | ✅ Yes | Gemini API key for LLM and embeddings | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| Variable | Service | Required | Description |
+| --- | --- | --- | --- |
+| `GOOGLE_API_KEY` | Backend | Yes | Google Gemini API key for embeddings and responses |
+| `GEMINI_API_KEY` | Backend | No | Backward-compatible alias for `GOOGLE_API_KEY` |
+| `NEXT_PUBLIC_API_URL` | Frontend | Production | Public URL of the deployed FastAPI service, without a trailing slash |
 
----
+Never commit `.env` or API keys. Use the hosting provider’s encrypted environment variables for production.
+
+## Deployment
+
+Deploy the frontend from the repository root as a Next.js project. Configure `NEXT_PUBLIC_API_URL` with the deployed backend URL. Deploy the `backend/` directory as a Python service with:
+
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+See [docs/deployment.md](docs/deployment.md) for the complete Vercel and backend checklist.
+
+## Repository layout
+
+```text
+app/                 Next.js routes and UI components
+backend/app/         FastAPI routes and RAG services
+backend/scripts/     Backend diagnostics and smoke scripts
+docs/                Architecture, API, and deployment documentation
+EVAL_DOCS/           Evaluation methodology and CI notes
+tests/evals/         Evaluation code and datasets
+public/              Static brand assets
+```
 
 ## Documentation
 
-Full code documentation is available in the [`/docs`](./docs/) folder:
+- [Architecture](docs/architecture.md)
+- [API reference](docs/api.md)
+- [Backend guide](docs/backend.md)
+- [Frontend guide](docs/frontend.md)
+- [RAG pipeline](docs/rag-pipeline.md)
+- [Deployment](docs/deployment.md)
 
-- [**Architecture Overview**](./docs/architecture.md) — System design and data flow
-- [**Backend Reference**](./docs/backend.md) — All backend files documented
-- [**Frontend Reference**](./docs/frontend.md) — All components documented
-- [**API Reference**](./docs/api.md) — Every endpoint with curl examples
-- [**RAG Pipeline**](./docs/rag-pipeline.md) — Chunking, embedding, retrieval strategy
+## Quality checks
 
----
-*Eval pipeline configured to automatically run on pull requests.*
- 
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+## License
+
+This project is currently intended for development and evaluation. Add a license before distributing it as a public production product.
