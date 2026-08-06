@@ -10,6 +10,14 @@ DevDocs AI turns a public GitHub repository into a conversational, source-aware 
 - Gemini for embeddings and streamed answers
 - Evaluation assets and RAG documentation kept under dedicated folders
 
+## Product preview
+
+The landing page introduces the workflow, while the chat workspace provides repository ingestion, streamed answers, and source links.
+
+| Landing page | Chat workspace |
+| --- | --- |
+| ![DevDocs AI landing page](docs/screenshots/hero.png) | ![DevDocs AI chat workspace](docs/screenshots/chat.png) |
+
 ## Architecture
 
 ```text
