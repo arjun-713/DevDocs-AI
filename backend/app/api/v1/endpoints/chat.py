@@ -14,7 +14,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     repo_url: str
     query: str
-    model: Optional[str] = "gemini-2.5-flash"
+    model: Optional[str] = "gpt-4o-mini"
 
 class SourceMetadata(BaseModel):
     source: str
@@ -23,9 +23,9 @@ class SourceMetadata(BaseModel):
 @router.post("/chat")
 async def chat_with_repo(request: ChatRequest):
     """
-    Retrieves context and streams an answer from Gemini.
+    Retrieves context and streams an answer from OpenAI.
     """
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="API Key not configured")
 

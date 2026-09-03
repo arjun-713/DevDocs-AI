@@ -67,5 +67,5 @@ This document provides a detailed overview of every key file in the `/backend` d
 
 ## `.env.example`
 **Purpose**: Template for required environment variables.
-- **Key Functions**: Contains placeholders for `GOOGLE_API_KEY` (required) and `GITHUB_TOKEN` (optional).
+- **Key Functions**: Uses `OPENAI_API_KEY` for embeddings and answer generation; `GITHUB_TOKEN` remains optional.
 - **Implementation Note**: Copy this file to `.env` before running the backend.

@@ -1,13 +1,13 @@
 from typing import List, AsyncGenerator
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.documents import Document
 
 class LLMService:
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
-        self.llm = ChatGoogleGenerativeAI(
+    def __init__(self, api_key: str, model_name: str = "gpt-4o-mini"):
+        self.llm = ChatOpenAI(
             model=model_name,
-            google_api_key=api_key,
+            api_key=api_key,
             streaming=True,
             temperature=0.2,
             timeout=120,

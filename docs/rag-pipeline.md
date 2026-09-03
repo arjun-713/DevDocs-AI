@@ -32,14 +32,14 @@ The 1500-character size provides large-enough sentences representing complete pr
 
 ## Vector Embeddings
 
-We utilize **Google's `gemini-embedding-001`** model wrapper from LangChain to translate document chunks into mathematical vector representations.
+We use OpenAI's `text-embedding-3-small` model through LangChain to translate document chunks into vector representations.
 - Vectors accurately map the semantic intent of documentation into dense floats.
 - For extremely large documentation libraries, the API request rate limits are respected by a rolling exponential backoff system generating 50 vectors parallelly and repeating up to 5 times.
 - These vectors are safely ingested into an in-process, disk-persistent **ChromaDB** container allowing long-term vector querying without latency.
 
 ## Retrieval Strategy
 
-When a user chats over an imported repository, their query (e.g. `How does App Router work?`) is independently embedded through `gemini-embedding-001` to generate a vector point.
+When a user chats over an imported repository, their query (e.g. `How does App Router work?`) is independently embedded through `text-embedding-3-small` to generate a vector point.
 
 - **Similarity Engine:** Using `cosine` distance similarity logic natively in Chroma, we locate the `Top 5 (k=5)` closest textual document embeddings.
 - **Top-k (`retriever.py`):** Picking the absolute highest semantic matches significantly compresses the 2,000,000 token context window allowed by massive models, eliminating 99% of hallucination error and drastically lowering the token cost.

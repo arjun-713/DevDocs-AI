@@ -20,9 +20,9 @@ async def test_full_pipeline():
     
     print(f"--- Testing Pipeline for {test_repo} ---")
     
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("✗ Error: API Key (GOOGLE_API_KEY or GEMINI_API_KEY) not found in .env")
+        print("✗ Error: OPENAI_API_KEY not found in .env")
         return
 
     try:

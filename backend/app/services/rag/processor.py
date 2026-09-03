@@ -1,6 +1,6 @@
 from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from .ingestion.models import RepoDoc
 
@@ -8,9 +8,9 @@ from .ingestion.models import RepoDoc
 class RAGProcessor:
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001",
-            google_api_key=api_key
+        self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small",
+            api_key=api_key
         )
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1500,

@@ -73,7 +73,7 @@ async def ingest_repository(request: IngestRequest, background_tasks: Background
     """
     Triggers repository ingestion. Handles backgrounding and existing collection checks.
     """
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="API Key not configured")
 

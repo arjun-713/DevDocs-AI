@@ -1,14 +1,14 @@
 from typing import List
 from app.db.chroma import get_chroma_client
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
 
 class RAGRetriever:
     def __init__(self, api_key: str):
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001",
-            google_api_key=api_key
+        self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small",
+            api_key=api_key
         )
         self.client = get_chroma_client()
 
@@ -67,4 +67,3 @@ class RAGRetriever:
                 break
         
         return selected
-

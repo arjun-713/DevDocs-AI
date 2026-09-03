@@ -21,7 +21,7 @@ async def test_chat_pipeline():
     print(f"--- Testing Chat for {test_repo} ---")
     print(f"Query: {test_query}")
     
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("✗ Error: API Key not found in .env")
         return

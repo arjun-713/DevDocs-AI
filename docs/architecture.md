@@ -9,7 +9,7 @@ This document provides a high-level overview of the DevDocs AI system, illustrat
   - [Frontend (Next.js)](#frontend-nextjs)
   - [Backend (FastAPI)](#backend-fastapi)
   - [RAG Engine (LangChain + ChromaDB)](#rag-engine-langchain--chromadb)
-  - [LLM Service (Google Gemini)](#llm-service-google-gemini)
+  - [LLM Service (OpenAI)](#llm-service-openai)
 
 ## High-Level Flow
 
@@ -93,5 +93,5 @@ The core logic that powers the Retrieval-Augmented Generation.
 ### LLM Service (Google Gemini)
 
 We utilize Google's Gemini family of models (via LangChain's Google GenAI integration).
-- **Responsibility**: Provides text embeddings during ingestion (`gemini-embedding-001`) and logical reasoning/answer generation during the chat phase (e.g., `gemini-2.5-flash`).
+- **Responsibility**: Provides text embeddings during ingestion (`text-embedding-3-small`) and logical reasoning/answer generation during the chat phase (e.g., `gpt-4o-mini`).
 - **Features**: Highly capable context window and streaming support for real-time UI updates.

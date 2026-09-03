@@ -1,13 +1,15 @@
 import os
-import google.generativeai as genai
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise SystemExit("OPENAI_API_KEY is not configured")
+
+client = OpenAI(api_key=api_key)
 
 print("Available models:")
-for m in genai.list_models():
-    if 'embedContent' in m.supported_generation_methods:
-        print(m.name)
+for model in client.models.list().data:
+    print(model.id)
