@@ -10,16 +10,8 @@ interface MessageActionsProps {
 }
 
 const MODELS = [
-    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
-    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-    { value: "gemini-2.0-pro", label: "Gemini 2.0 Pro" },
-    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-    { value: "gemini-3.0-flash", label: "Gemini 3.0 Flash" },
-    { value: "gemini-3.0-pro", label: "Gemini 3.0 Pro" },
-    { value: "gemini-3.1-flash", label: "Gemini 3.1 Flash" },
-    { value: "gemini-3.1-pro", label: "Gemini 3.1 Pro" },
+    { value: "gpt-4o-mini", label: "GPT-4o mini" },
+    { value: "gpt-4o", label: "GPT-4o" },
 ];
 
 export default function MessageActions({ content, onRegenerate, onLike, onDislike }: MessageActionsProps) {
@@ -73,7 +65,7 @@ export default function MessageActions({ content, onRegenerate, onLike, onDislik
             <button
                 onClick={handleLike}
                 title="Good response"
-                className={`p-1.5 rounded-lg transition-all ${liked === "like" ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                className={`p-1.5 rounded-lg transition-all ${liked === "like" ? "text-blue-700 bg-blue-50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}
             >
                 <svg className="w-4 h-4" fill={liked === "like" ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" />
@@ -84,7 +76,7 @@ export default function MessageActions({ content, onRegenerate, onLike, onDislik
             <button
                 onClick={handleDislike}
                 title="Bad response"
-                className={`p-1.5 rounded-lg transition-all ${liked === "dislike" ? "text-red-500 bg-red-50" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                className={`p-1.5 rounded-lg transition-all ${liked === "dislike" ? "text-red-700 bg-red-50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}
             >
                 <svg className="w-4 h-4" fill={liked === "dislike" ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z" />

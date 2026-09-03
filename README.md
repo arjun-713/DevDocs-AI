@@ -47,7 +47,7 @@ pip install -r backend/requirements.txt
 npm run dev
 ```
 
-The frontend runs at `http://localhost:3000`; the API runs at `http://localhost:8000`. Set `GOOGLE_API_KEY` in `.env` before using ingestion or chat.
+The frontend runs at `http://localhost:3000`; the API runs at `http://localhost:8000`. Set `OPENAI_API_KEY` in `.env` before using ingestion or chat.
 
 To run services separately:
 
@@ -60,8 +60,7 @@ npm run dev:backend
 
 | Variable | Service | Required | Description |
 | --- | --- | --- | --- |
-| `GOOGLE_API_KEY` | Backend | Yes | Google Gemini API key for embeddings and responses |
-| `GEMINI_API_KEY` | Backend | No | Backward-compatible alias for `GOOGLE_API_KEY` |
+| `OPENAI_API_KEY` | Backend | Yes | OpenAI API key for embeddings and responses |
 | `NEXT_PUBLIC_API_URL` | Frontend | Production | Public URL of the deployed FastAPI service, without a trailing slash |
 
 Never commit `.env` or API keys. Use the hosting provider’s encrypted environment variables for production.

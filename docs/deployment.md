@@ -21,7 +21,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Set `GOOGLE_API_KEY` (or the legacy `GEMINI_API_KEY`) in the backend environment. Generate a public HTTPS domain and use it as the frontend’s `NEXT_PUBLIC_API_URL`.
+Set `OPENAI_API_KEY` in the backend environment. Generate a public HTTPS domain and use it as the frontend’s `NEXT_PUBLIC_API_URL`.
 
 ## Production checks
 

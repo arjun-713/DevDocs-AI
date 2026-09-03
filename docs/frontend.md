@@ -32,7 +32,7 @@ This document provides a detailed overview of every key component and page in th
 - **Key State**:
   - `messages`: React state holding all sent/received user & AI messages (and parsed source citations).
   - `repoUrl` / `status` / `progress`: Controls the ingestion UI layer during loading sequences.
-  - `selectedModel`: Passed directly back to the endpoint (e.g., `gemini-2.5-flash`).
+  - `selectedModel`: Passed directly back to the endpoint (e.g., `gpt-4o-mini`).
 - **Endpoint Called**:
   - Polling `GET /api/v1/ingest/status/...` during the initial page load to update the progress bar.
   - Calling `POST /api/v1/chat` to retrieve the SSE response stream for incoming questions.

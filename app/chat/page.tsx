@@ -6,6 +6,7 @@ import { ArrowRight, Page, WarningTriangle, Database, Server, Plus } from "icono
 import { Logo, LogoIcon } from "../components/Logo";
 import ChatMarkdown from "../components/ChatMarkdown";
 import MessageActions from "../components/MessageActions";
+import { apiUrl, responseError } from "../../lib/api";
 
 function ChatPageContent() {
     const searchParams = useSearchParams();
@@ -20,7 +21,7 @@ function ChatPageContent() {
     const [inputValue, setInputValue] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
     const [cachedRepos, setCachedRepos] = useState<string[]>([]);
-    const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
+    const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Helper functions
@@ -74,15 +75,14 @@ function ChatPageContent() {
 
         const initIngestion = async () => {
             try {
-                const res = await fetch("/api/v1/ingest", {
+                const res = await fetch(apiUrl("/api/v1/ingest"), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ repo_url: repoUrl }),
                 });
 
                 if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.detail || "Failed to start ingestion");
+                    throw await responseError(res, "Failed to start ingestion");
                 }
 
                 const data = await res.json();
@@ -109,8 +109,8 @@ function ChatPageContent() {
     const pollStatus = async (colName: string) => {
         const interval = setInterval(async () => {
             try {
-                const res = await fetch(`/api/v1/ingest/status/${colName}`);
-                if (!res.ok) throw new Error("Status check failed");
+                const res = await fetch(apiUrl(`/api/v1/ingest/status/${colName}`));
+                if (!res.ok) throw await responseError(res, "Status check failed");
 
                 const data = await res.json();
 
@@ -127,24 +127,23 @@ function ChatPageContent() {
                 } else if (data.progress !== undefined) {
                     setProgress(data.progress);
                 }
-            } catch {
+            } catch (error: unknown) {
                 clearInterval(interval);
                 setStatus("error");
-                setErrorMessage("Lost connection to processing server.");
+                setErrorMessage(error instanceof Error ? error.message : "Lost connection to processing server.");
             }
         }, 2000);
     };
 
     const fetchAIResponse = async (query: string, model: string): Promise<{ content: string; sources: { source: string; url: string }[] }> => {
-        const res = await fetch("/api/v1/chat", {
+        const res = await fetch(apiUrl("/api/v1/chat"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ repo_url: repoUrl, query, model }),
         });
 
         if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.detail || "Error generating response");
+            throw await responseError(res, "Error generating response");
         }
 
         const fullText = await res.text();
@@ -320,16 +319,8 @@ function ChatPageContent() {
                         className="w-full bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100 transition-shadow appearance-none cursor-pointer"
                         style={{ backgroundSize: '1rem', backgroundPosition: 'calc(100% - 10px) center', backgroundRepeat: 'no-repeat', backgroundImage: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%236b7280\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"6 9 12 15 18 9\"></polyline></svg>')" }}
                     >
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                        <option value="gemini-2.0-pro">Gemini 2.0 Pro</option>
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                        <option value="gemini-3.0-flash">Gemini 3.0 Flash</option>
-                        <option value="gemini-3.0-pro">Gemini 3.0 Pro</option>
-                        <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
-                        <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
+                        <option value="gpt-4o-mini">GPT-4o mini</option>
+                        <option value="gpt-4o">GPT-4o</option>
                     </select>
                 </div>
             </div>
@@ -514,7 +505,7 @@ function ChatPageContent() {
                                 <button
                                     type="submit"
                                     disabled={!inputValue.trim() || isStreaming}
-                                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-[1.5rem] px-5 py-3 ml-1 flex items-center gap-1.5 transition-colors font-medium text-sm shadow-sm shrink-0"
+                                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-white disabled:text-gray-900 text-white rounded-[1.5rem] px-5 py-3 ml-1 flex items-center gap-1.5 transition-colors font-medium text-sm shadow-sm shrink-0"
                                 >
                                     <span className="hidden sm:inline">Ask</span> <ArrowRight className="w-4 h-4" />
                                 </button>

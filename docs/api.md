@@ -110,7 +110,7 @@ curl -N -X POST http://localhost:8000/api/v1/chat \
   -d '{
     "repo_url": "https://github.com/fastapi/fastapi",
     "query": "How do I define a generic path parameter?",
-    "model": "gemini-2.5-flash"
+    "model": "gpt-4o-mini"
   }'
 ```
 
