@@ -31,14 +31,14 @@ async def test_chat_pipeline():
         
         # 1. Retrieve
         print("\nStep 1: Retrieving context...")
-        retriever = RAGRetriever(api_key=api_key)
+        retriever = RAGRetriever()
         docs = retriever.get_relevant_documents(collection_name, test_query)
         print(f"✓ Found {len(docs)} relevant chunks.")
         for doc in docs:
             print(f"  - From: {doc.metadata.get('source')}")
 
         # 2. Stream Chat
-        print("\nStep 2: Streaming answer from Gemini 2.5 Flash...")
+        print("\nStep 2: Streaming answer from GPT-6 Luna...")
         llm_service = LLMService(api_key=api_key)
         
         print("\nAnswer: ", end="", flush=True)

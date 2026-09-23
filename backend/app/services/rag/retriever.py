@@ -1,15 +1,11 @@
 from typing import List
 from app.db.chroma import get_chroma_client
-from langchain_openai import OpenAIEmbeddings
+from app.services.rag.embeddings import embed_query
 from langchain_core.documents import Document
 
 
 class RAGRetriever:
-    def __init__(self, api_key: str):
-        self.embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-small",
-            api_key=api_key
-        )
+    def __init__(self):
         self.client = get_chroma_client()
 
     @staticmethod
@@ -35,7 +31,7 @@ class RAGRetriever:
         collection = self.client.get_collection(name=repo_collection_name)
         
         # Embed the query
-        query_embedding = self.embeddings.embed_query(query)
+        query_embedding = embed_query(query)
         
         # Fetch more candidates than needed so we can deduplicate
         fetch_count = min(k * 3, collection.count())

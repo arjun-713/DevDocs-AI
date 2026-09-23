@@ -3,9 +3,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
 import json
+import logging
 import os
 
 from app.services.rag.retriever import RAGRetriever
+from app.services.rag.embedding_budget import EmbeddingBudgetExceeded
 from app.services.rag.llm import LLMService
 from app.db.chroma import get_repo_collection_name
 
@@ -14,7 +16,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     repo_url: str
     query: str
-    model: Optional[str] = "gpt-4o-mini"
+    model: Optional[str] = None
 
 class SourceMetadata(BaseModel):
     source: str
@@ -33,9 +35,11 @@ async def chat_with_repo(request: ChatRequest):
     
     try:
         # 1. Retrieve relevant chunks
-        retriever = RAGRetriever(api_key=api_key)
+        retriever = RAGRetriever()
         context_docs = retriever.get_relevant_documents(collection_name, request.query)
     except Exception as retrieval_error:
+        if isinstance(retrieval_error, EmbeddingBudgetExceeded):
+            raise HTTPException(status_code=429, detail=str(retrieval_error))
         error_msg = str(retrieval_error)
         if "does not exist" in error_msg or "not found" in error_msg.lower():
             raise HTTPException(
@@ -47,7 +51,10 @@ async def chat_with_repo(request: ChatRequest):
     try:
 
         # 2. Setup LLM and metadata
-        llm_service = LLMService(api_key=api_key, model_name=request.model)
+        llm_service = LLMService(
+            api_key=api_key,
+            model_name=request.model or os.getenv("OPENAI_MODEL", "gpt-6-luna"),
+        )
         
         # Create a list of sources for the frontend to display as "Source Cards"
         sources = [
@@ -61,8 +68,12 @@ async def chat_with_repo(request: ChatRequest):
             yield f"METADATA:{json.dumps(unique_sources)}\n\n"
             
             # Stream the actual answer
-            async for chunk in llm_service.stream_answer(request.query, context_docs):
-                yield chunk
+            try:
+                async for chunk in llm_service.stream_answer(request.query, context_docs):
+                    yield chunk
+            except Exception:
+                logging.exception("Chat generation failed")
+                yield "\n\nERROR: Chat generation failed. Check the configured OpenAI model and API key."
 
         return StreamingResponse(generate(), media_type="text/event-stream")
 

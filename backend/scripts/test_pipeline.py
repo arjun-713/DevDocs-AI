@@ -1,13 +1,9 @@
 import asyncio
 import sys
 import os
-from dotenv import load_dotenv
 
 # Add the backend directory to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Explicitly load .env from the root directory
-load_dotenv(os.path.join(os.path.dirname(__file__), '../../.env'))
 
 from app.services.rag.ingestion.crawler import GitHubCrawler
 from app.services.rag.processor import RAGProcessor
@@ -20,11 +16,6 @@ async def test_full_pipeline():
     
     print(f"--- Testing Pipeline for {test_repo} ---")
     
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("✗ Error: OPENAI_API_KEY not found in .env")
-        return
-
     try:
         # 1. Crawl
         print("Step 1: Crawling...")
@@ -34,7 +25,7 @@ async def test_full_pipeline():
 
         # 2. Process
         print("Step 2: Chunking...")
-        processor = RAGProcessor(api_key=api_key)
+        processor = RAGProcessor()
         chunks = processor.process_docs(crawler_result.files)
         print(f"✓ Created {len(chunks)} chunks.")
 

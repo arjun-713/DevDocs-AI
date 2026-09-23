@@ -1,17 +1,12 @@
 from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
+from app.services.rag.embeddings import embed_passages
 from .ingestion.models import RepoDoc
 
 
 class RAGProcessor:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-small",
-            api_key=api_key
-        )
+    def __init__(self):
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1500,
             chunk_overlap=150,
@@ -52,62 +47,74 @@ class RAGProcessor:
     async def index_documents(self, chroma_client, collection_name: str, documents: List[Document],
                               progress_callback=None):
         """
-        Embeds and stores documents in ChromaDB.
-        Uses batched embedding with retry logic for rate limits.
+        Budget-guards bounded OpenAI embedding batches while prior batches are
+        written to Chroma.
         """
         import asyncio
         import logging
-        import re
+        import os
+        import time
 
         collection = chroma_client.get_or_create_collection(name=collection_name)
-
-        # Smaller batches for free tier stability
-        batch_size = 20
+        batch_size = max(1, int(os.getenv("EMBEDDING_BATCH_SIZE", "64")))
+        write_concurrency = max(1, min(2, int(os.getenv("CHROMA_WRITE_CONCURRENCY", "2"))))
         total_indexed = 0
         total_batches = (len(documents) + batch_size - 1) // batch_size
+        pending_writes = set()
 
-        for batch_num, start in enumerate(range(0, len(documents), batch_size)):
-            batch = documents[start:start + batch_size]
-
-            texts = [doc.page_content for doc in batch]
-            metadatas = [doc.metadata for doc in batch]
-            ids = [f"{doc.metadata['source']}_chunk_{start + i}" for i, doc in enumerate(batch)]
-
-            # Retry loop with exponential backoff
-            max_retries = 8  # More retries for CI stability
-            for attempt in range(max_retries + 1):
+        async def write_batch(embeddings, texts, metadatas, ids):
+            for attempt in range(3):
                 try:
-                    embeddings = await self.embeddings.aembed_documents(texts)
-                    collection.add(
+                    await asyncio.to_thread(
+                        collection.upsert,
                         embeddings=embeddings,
                         documents=texts,
                         metadatas=metadatas,
-                        ids=ids
+                        ids=ids,
                     )
-                    total_indexed += len(ids)
-                    logging.info(
-                        f"Indexed batch {batch_num + 1}/{total_batches} ({total_indexed}/{len(documents)} chunks)")
+                    return len(ids)
+                except Exception:
+                    if attempt == 2:
+                        raise
+                    logging.warning("Chroma write failed; retrying idempotent upsert (%s/3)", attempt + 1)
+                    await asyncio.sleep(0.25 * (2 ** attempt))
 
-                    # Report progress
-                    if progress_callback:
-                        pct = 50 + int((total_indexed / len(documents)) * 50)
-                        progress_callback(min(pct, 99))
+        async def record_completed(completed_tasks):
+            nonlocal total_indexed
+            for task in completed_tasks:
+                total_indexed += task.result()
+            if progress_callback and documents:
+                pct = 50 + int((total_indexed / len(documents)) * 50)
+                progress_callback(min(pct, 99))
 
-                    break  # Success — exit retry loop
-                except Exception as e:
-                    error_str = str(e)
-                    if "RESOURCE_EXHAUSTED" in error_str or "429" in error_str:
-                        # Wait significantly longer on free tier hits
-                        wait_time = min(20 * (2 ** attempt), 120) 
-                        logging.warning(
-                            f"Rate limited on batch {batch_num + 1}. Waiting {wait_time}s before retry {attempt + 1}/{max_retries}...")
-                        await asyncio.sleep(wait_time)
-                        if attempt == max_retries:
-                            raise  # Exhausted retries
-                    else:
-                        raise  # Non-rate-limit error, propagate immediately
+        try:
+            for batch_num, start in enumerate(range(0, len(documents), batch_size)):
+                batch = documents[start:start + batch_size]
+                texts = [doc.page_content for doc in batch]
+                metadatas = [doc.metadata for doc in batch]
+                ids = [f"{doc.metadata['source']}_chunk_{start + i}" for i, doc in enumerate(batch)]
+                embeddings = await asyncio.to_thread(embed_passages, texts)
+                pending_writes.add(asyncio.create_task(write_batch(embeddings, texts, metadatas, ids)))
 
-            # Mandatory delay between batches to respect RPM limits
-            await asyncio.sleep(2.0)
+                # Keep memory and Chroma request pressure bounded. While these writes
+                # run, the next batch is embedded on a worker thread.
+                if len(pending_writes) >= write_concurrency:
+                    completed, pending_writes = await asyncio.wait(
+                        pending_writes, return_when=asyncio.FIRST_COMPLETED
+                    )
+                    await record_completed(completed)
+
+                logging.info("Prepared batch %s/%s", batch_num + 1, total_batches)
+
+            while pending_writes:
+                completed, pending_writes = await asyncio.wait(
+                    pending_writes, return_when=asyncio.FIRST_COMPLETED
+                )
+                await record_completed(completed)
+        except Exception:
+            for task in pending_writes:
+                task.cancel()
+            await asyncio.gather(*pending_writes, return_exceptions=True)
+            raise
 
         return total_indexed

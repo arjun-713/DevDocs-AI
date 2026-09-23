@@ -35,7 +35,7 @@ This document provides a detailed overview of every key file in the `/backend` d
 **Purpose**: Defines the API route for interacting with the indexed repository.
 - **Key Functions**:
   - `chat_with_repo(...)`: Accepts `POST /api/v1/chat`. Coordinates the query parsing, vector retrieval, and LLM streaming generator.
-  - Generates a Server-Sent Events (SSE) stream returning chunks of text back to the React UI as the Gemini model thinks.
+  - Generates a streamed response from the configured OpenAI model for the React UI.
 - **Implementation Note**: Prepends `METADATA:[JSON]\n\n` containing source citations before the first chunk of the LLM response is streamed, giving the UI real-time citations.
 
 ## `app/services/rag/ingestion/crawler.py`
@@ -49,23 +49,23 @@ This document provides a detailed overview of every key file in the `/backend` d
 **Purpose**: Handles text chunking and vector embedding generation.
 - **Key Functions**:
   - `process_docs(...)`: Utilizes LangChain's `RecursiveCharacterTextSplitter` (1500 chars, 150 overlap) to chunk documentation. Caps extremely large files at 50KB to preserve memory.
-  - `index_documents(...)`: Batches document chunks (50 at a time) and embeds them using Gemini's embedding API. Inserts them into ChromaDB.
-- **Implementation Note**: Contains critical exponential backoff and retry logic catching `RESOURCE_EXHAUSTED` (429 HTTP) errors to gracefully handle free-tier Google API rate limits.
+  - `index_documents(...)`: Batches document chunks, reserves their input-token estimate against the shared cap, creates OpenAI vectors, and overlaps embedding requests with bounded Chroma upserts.
+- **Implementation Note**: A persistent SQLite ledger caps embedding endpoint usage at $0.50 (25 million tokens at the current `text-embedding-3-small` rate). It serializes reservations across concurrent ingests and chat-query embedding requests.
 
 ## `app/services/rag/retriever.py`
 **Purpose**: Searches ChromaDB for relevant vector embeddings matching a user's prompt.
 - **Key Functions**:
-  - `RAGRetriever.get_context(...)`: Executes a similarity vector search (`k=5`). Deduplicates matching URLs from the metadata to ensure unique source citations.
+  - `RAGRetriever.get_relevant_documents(...)`: Embeds the query with `text-embedding-3-small`, executes a similarity vector search (`k=5`), and removes overlapping chunks from the retrieved context.
 - **Implementation Note**: Depends on `get_chroma_client()` to get a database reference.
 
 ## `app/services/rag/llm.py`
-**Purpose**: Initializes and interacts with the Google Gemini LLM API via LangChain.
+**Purpose**: Initializes and interacts with the OpenAI chat API via LangChain. This is the only runtime feature that needs an OpenAI key.
 - **Key Functions**:
-  - `LLMService(model_name=...)`: Instantiates `ChatGoogleGenerativeAI`. Accepts a configurable `model_name` from the UI.
+  - `LLMService(model_name=...)`: Instantiates `ChatOpenAI`. The UI-selected model is used; the server default is `gpt-6-luna` (`OPENAI_MODEL` can override the fallback).
   - `generate_response(...)`: Builds the system prompt using retrieved documentation context from the retriever, instructing the LLM to only use the provided context. Returns an asynchronous generator.
-- **Implementation Note**: Uses a timeout of 120s and `max_retries=2` to ensure large context queries do not fail mid-stream.
+- **Implementation Note**: Uses a timeout of 120s and `max_retries=2`. GPT-6 Luna requires the API's default temperature value of `1`.
 
 ## `.env.example`
 **Purpose**: Template for required environment variables.
-- **Key Functions**: Uses `OPENAI_API_KEY` for embeddings and answer generation; `GITHUB_TOKEN` remains optional.
+- **Key Functions**: Uses `OPENAI_API_KEY` for both capped embeddings and answer generation. The key remains server-side.
 - **Implementation Note**: Copy this file to `.env` before running the backend.

@@ -1,6 +1,6 @@
 # API Reference
 
-This document outlines the REST API endpoints provided by the FastAPI backend of the DevDocs AI platform. The API runs locally on `http://127.0.0.1:8000`. Next.js automatically proxies requests from `domain.com/api/...` to the backend.
+This document outlines the REST API endpoints provided by the FastAPI backend. The API runs locally on `http://127.0.0.1:8000`; in Docker Compose, Next.js proxies `/api/*` to the backend service. The proxied OpenAPI docs are at `http://localhost:3000/api/docs`.
 
 ## Table of Contents
 
@@ -8,6 +8,7 @@ This document outlines the REST API endpoints provided by the FastAPI backend of
 - [Health Check `GET /`](#health-check-get-)
 - [Trigger Ingestion `POST /api/v1/ingest`](#trigger-ingestion-post-apiv1ingest)
 - [Check Ingestion Status `GET /api/v1/ingest/status/{collection}`](#check-ingestion-status-get-apiv1ingeststatuscollection)
+- [Embedding Budget `GET /api/v1/embedding-budget`](#embedding-budget-get-apiv1embedding-budget)
 - [Chat with Repository `POST /api/v1/chat`](#chat-with-repository-post-apiv1chat)
 
 ---
@@ -19,6 +20,7 @@ This document outlines the REST API endpoints provided by the FastAPI backend of
 | `GET`  | `/`  | Health check endpoint indicating if the FastAPI framework is online. |
 | `POST` | `/api/v1/ingest` | Kick off the asynchronous process to crawl and embed a GitHub codebase. |
 | `GET`  | `/api/v1/ingest/status/{col}` | Poll for dynamic ingestion progress from 0-100%. |
+| `GET`  | `/api/v1/embedding-budget` | Check the cumulative embedding-token allowance and estimated spend. |
 | `POST` | `/api/v1/chat` | Send a query string to the retrieval system utilizing Server-Sent Events (SSE). |
 
 ---
@@ -63,7 +65,7 @@ curl -X POST http://localhost:8000/api/v1/ingest \
 {
   "status": "accepted",
   "repo_url": "https://github.com/fastapi/fastapi",
-  "collection_name": "fastapi__fastapi",
+  "collection_name": "fastapi__fastapi__openai_text_3_small",
   "message": "Ingestion started in the background."
 }
 ```
@@ -76,7 +78,7 @@ Poll this endpoint while `status === processing` to receive real-time UI loading
 
 **Example Request:**
 ```bash
-curl -X GET http://localhost:8000/api/v1/ingest/status/fastapi__fastapi
+curl -X GET http://localhost:8000/api/v1/ingest/status/fastapi__fastapi__openai_text_3_small
 ```
 
 **Example Response (`processing`):**
@@ -99,9 +101,25 @@ curl -X GET http://localhost:8000/api/v1/ingest/status/fastapi__fastapi
 
 ---
 
+## Embedding Budget `GET /api/v1/embedding-budget`
+
+Returns accounting for the shared $0.50 lifetime cap on OpenAI embedding usage. The cap includes repository indexing and retrieval-query embeddings, but not chat-generation tokens.
+
+```json
+{
+  "used_tokens": 0,
+  "remaining_tokens": 25000000,
+  "budget_usd": 0.5,
+  "estimated_used_usd": 0.0,
+  "uncertain_requests": 0
+}
+```
+
+---
+
 ## Chat with Repository `POST /api/v1/chat`
 
-Executes the RAG pipeline to generate answers. The endpoint yields a chunked stream simulating typewriting text as the Gemini model predicts tokens. Includes metadata.
+Executes the RAG pipeline to generate answers. The endpoint streams OpenAI response chunks and source metadata.
 
 **Example Request:**
 ```bash
@@ -110,7 +128,7 @@ curl -N -X POST http://localhost:8000/api/v1/chat \
   -d '{
     "repo_url": "https://github.com/fastapi/fastapi",
     "query": "How do I define a generic path parameter?",
-    "model": "gpt-4o-mini"
+    "model": "gpt-6-luna"
   }'
 ```
 
@@ -125,4 +143,4 @@ To define a generic path parameter in FastAPI...
 
 **Error States:**
 - `400 Bad Request`: If the target repository has not been ingested yet.
-- `500 Server Error`: Gemini API timeouts or invalid API keys.
+- `500 Server Error`: OpenAI API errors, timeouts, or invalid API keys.
