@@ -37,3 +37,4 @@ pnpm-debug.log*
 Thumb.db
 *.pem
 .codebase-memory/
+.impeccable/

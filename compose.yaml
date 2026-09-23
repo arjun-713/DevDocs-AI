@@ -1,0 +1,61 @@
+services:
+  chroma:
+    image: chromadb/chroma:1.0.20
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /data
+      ANONYMIZED_TELEMETRY: "FALSE"
+      ALLOW_RESET: "FALSE"
+    volumes:
+      - chroma_data:/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6-luna}
+      EMBEDDING_BUDGET_DB_PATH: /var/lib/devdocs/embedding_budget.sqlite3
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE:-32}
+    expose:
+      - "8000"
+    volumes:
+      - embedding_budget_data:/var/lib/devdocs
+    depends_on:
+      chroma:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, chromadb; urllib.request.urlopen('http://localhost:8000/', timeout=3); chromadb.HttpClient(host='chroma', port=8000).heartbeat()"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      args:
+        API_INTERNAL_URL: http://backend:8000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+  embedding_budget_data:

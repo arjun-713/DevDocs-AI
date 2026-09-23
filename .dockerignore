@@ -1,0 +1,14 @@
+.git
+.next
+node_modules
+.venv
+venv
+__pycache__
+*.py[cod]
+.env
+.env.*
+!.env.example
+backend/data
+coverage
+docs/superpowers/plans
+.impeccable

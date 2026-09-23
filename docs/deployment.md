@@ -1,5 +1,19 @@
 # Deployment
 
+## Local production stack
+
+The repository includes a production-mode Docker Compose stack containing the Next.js frontend, FastAPI backend, and ChromaDB server. It is independent of the Vercel deployment path.
+
+```bash
+cp .env.example .env
+# Set OPENAI_API_KEY and optionally OPENAI_MODEL in .env
+docker compose up --build
+```
+
+The frontend is available at `http://localhost:3000`. Compose uses health checks to gate startup, proxies `/api/*` internally to FastAPI, and stores Chroma data plus the cumulative $0.50 OpenAI embedding-budget ledger in persistent `chroma_data` and `embedding_budget_data` volumes. Stop with `docker compose down`; avoid `docker compose down --volumes` if you want to retain indexed data and the spend cap across restarts. `OPENAI_MODEL` defaults to `gpt-6-luna`. Repository indexing and retrieval use OpenAI `text-embedding-3-small`; `/api/v1/embedding-budget` reports the remaining embedding allowance. The embedding cap does not include chat-generation usage or other apps using the same OpenAI account.
+
+## Vercel and separate backend
+
 DevDocs AI is a two-service application: the Next.js frontend is deployed to Vercel, while the FastAPI and ChromaDB backend runs on a Python host such as Railway or Render.
 
 ## Vercel frontend
@@ -21,7 +35,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Set `OPENAI_API_KEY` in the backend environment. Generate a public HTTPS domain and use it as the frontend’s `NEXT_PUBLIC_API_URL`.
+Set `OPENAI_API_KEY` and optionally `OPENAI_MODEL` in the backend environment. Generate a public HTTPS domain and use it as the frontend’s `NEXT_PUBLIC_API_URL`.
 
 ## Production checks
 

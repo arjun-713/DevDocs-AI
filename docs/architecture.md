@@ -37,14 +37,15 @@ flowchart TD
     %% RAG Pipeline
     subgraph Pipeline [RAG Pipeline - LangChain & ChromaDB]
         Crawler([GitHubCrawler])
-        Processor([RAGProcessor\nChunking & Embedding])
+        Processor([RAGProcessor\nChunking & OpenAI Embedding])
         Retriever([RAGRetriever\nVector Search])
         Chroma[(ChromaDB)]
     end
 
     %% External APIs
     GitHub((GitHub API))
-    Gemini((Gemini LLM))
+    OpenAIEmbed((text-embedding-3-small))
+    OpenAI((OpenAI chat))
 
     %% Connections - Ingestion Flow
     UI -- "Start Ingestion" --> API_Ingest
@@ -52,7 +53,7 @@ flowchart TD
     API_Ingest --> Crawler
     Crawler -- "Fetch Repo Tree & Files" --> GitHub
     Crawler --> Processor
-    Processor -- "Generate Embeddings" --> Gemini
+    Processor -- "1536-d vectors" --> OpenAIEmbed
     Processor -- "Store Docs & Vectors" --> Chroma
 
     %% Connections - Chat Flow
@@ -60,8 +61,9 @@ flowchart TD
     API_Chat --> Retriever
     Retriever -- "Semantic Search" --> Chroma
     Chroma -- "Return Context Source" --> Retriever
-    Retriever -- "Context + Prompt" --> Gemini
-    Gemini -- "Stream Response" --> API_Chat
+    Retriever -- "Query embedding" --> OpenAIEmbed
+    Retriever -- "Context + Prompt" --> OpenAI
+    OpenAI -- "Stream Response" --> API_Chat
     API_Chat -- "SSE Stream" --> UI
 ```
 
@@ -70,7 +72,7 @@ flowchart TD
 ### Frontend (Next.js)
 
 The user interface is built using Next.js (App Router), React, and Tailwind CSS.
-- **Responsibility**: Provides a sleek, interactive chat surface and landing page. Manages states like the active repository, chat history, and the selected Gemini model.
+- **Responsibility**: Provides a sleek, interactive chat surface and landing page. Manages states like the active repository, chat history, and the selected OpenAI model.
 - **Key Features**: Smooth CSS animations, full markdown rendering (`ChatMarkdown`), message actions (copy, like, dislike, regenerate).
 
 ### Backend (FastAPI)
@@ -88,10 +90,8 @@ The core logic that powers the Retrieval-Augmented Generation.
 - **GitHubCrawler**: Asynchronously fetches repository file trees using the GitHub API, filters for documentation files (`.md`, `.rst`, etc.), and downloads raw contents using a semaphore to avoid rate limits.
 - **RAGProcessor**: Splits the raw text into manageable chunks (`RecursiveCharacterTextSplitter`) and generates vector embeddings.
 - **RAGRetriever**: Searches ChromaDB for the chunks most semantically similar to the user's query.
-- **ChromaDB**: An in-process vector database stored locally (`/data`) that holds the embeddings and metadata (source URLs) for fast retrieval.
+- **ChromaDB**: A vector database that holds embeddings and source metadata; Compose runs it as a persistent HTTP service, while local development can use an in-process persistent client.
 
-### LLM Service (Google Gemini)
+### LLM Service (OpenAI)
 
-We utilize Google's Gemini family of models (via LangChain's Google GenAI integration).
-- **Responsibility**: Provides text embeddings during ingestion (`text-embedding-3-small`) and logical reasoning/answer generation during the chat phase (e.g., `gpt-4o-mini`).
-- **Features**: Highly capable context window and streaming support for real-time UI updates.
+The backend uses OpenAI `text-embedding-3-small` for document and query vectors (1536 dimensions). A persistent SQLite token ledger reserves usage atomically and caps embedding API usage at $0.50 across ingestion and query embeddings. OpenAI also streams answers from the configured chat model (`gpt-6-luna` by default); that generation spend is separate from the embedding cap. `OPENAI_API_KEY` remains server-side.
