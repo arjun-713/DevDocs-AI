@@ -13,7 +13,7 @@ export async function responseError(response: Response, fallback: string): Promi
   } catch {
     return new Error(
       body.trim().startsWith("<!DOCTYPE") || body.trim().startsWith("<html")
-        ? `${fallback} (the API route returned an HTML ${response.status} page; check NEXT_PUBLIC_API_URL)`
+        ? `${fallback} (the API route returned an HTML ${response.status} page; check the frontend API proxy configuration)`
         : body.trim() || `${fallback} (${response.status})`,
     );
   }

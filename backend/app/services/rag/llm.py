@@ -4,12 +4,13 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.documents import Document
 
 class LLMService:
-    def __init__(self, api_key: str, model_name: str = "gpt-4o-mini"):
+    def __init__(self, api_key: str, model_name: str = "gpt-6-luna"):
         self.llm = ChatOpenAI(
             model=model_name,
             api_key=api_key,
             streaming=True,
-            temperature=0.2,
+            # GPT-6 Luna only accepts the API default temperature of 1.
+            temperature=1,
             timeout=120,
             max_retries=2,
         )

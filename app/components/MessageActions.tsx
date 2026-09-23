@@ -10,6 +10,7 @@ interface MessageActionsProps {
 }
 
 const MODELS = [
+    { value: "gpt-6-luna", label: "GPT-6 Luna" },
     { value: "gpt-4o-mini", label: "GPT-4o mini" },
     { value: "gpt-4o", label: "GPT-4o" },
 ];

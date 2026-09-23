@@ -21,7 +21,7 @@ function ChatPageContent() {
     const [inputValue, setInputValue] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
     const [cachedRepos, setCachedRepos] = useState<string[]>([]);
-    const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+    const [selectedModel, setSelectedModel] = useState("gpt-6-luna");
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Helper functions
@@ -159,6 +159,9 @@ function ChatPageContent() {
             } else {
                 answerText = "";
             }
+        }
+        if (answerText.startsWith("ERROR:")) {
+            throw new Error(answerText.slice("ERROR:".length).trim());
         }
         return { content: answerText.trim(), sources: parsedSources };
     };
@@ -319,6 +322,7 @@ function ChatPageContent() {
                         className="w-full bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100 transition-shadow appearance-none cursor-pointer"
                         style={{ backgroundSize: '1rem', backgroundPosition: 'calc(100% - 10px) center', backgroundRepeat: 'no-repeat', backgroundImage: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%236b7280\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"6 9 12 15 18 9\"></polyline></svg>')" }}
                     >
+                        <option value="gpt-6-luna">GPT-6 Luna</option>
                         <option value="gpt-4o-mini">GPT-4o mini</option>
                         <option value="gpt-4o">GPT-4o</option>
                     </select>
