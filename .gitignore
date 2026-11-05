@@ -38,3 +38,6 @@ Thumb.db
 *.pem
 .codebase-memory/
 .impeccable/
+
+# Local launch videos
+launch-video/
